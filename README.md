@@ -1,5 +1,4 @@
 # PARSEC_CODE
-
 Place for teensy related code along with flowcharts
 (flowcharts can be viewed using draw.io)
 
