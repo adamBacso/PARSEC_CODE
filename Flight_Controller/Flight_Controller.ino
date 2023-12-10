@@ -4,18 +4,21 @@
 #include <Adafruit_BME280.h>
 
 // SERIAL COMMS
-#define USB_SERIAL              Serial      // serial through USB
-#define COMMS_SERIAL            Serial1     // serial through pin(1,0) [TX,RX]
-#define GPS_SERIAL              Serial2     // serial through pin(8,7) [TX,RX]
+// serial through USB
+#define MY_USB_SERIAL              Serial      
+// serial through pin(1,0) [TX,RX]
+#define COMMS_SERIAL            Serial1     
+// serial through pin(8,7) [TX,RX]
+#define GPS_SERIAL              Serial2     
 
 // BME280
+// https://randomnerdtutorials.com/bme280-sensor-arduino-pressure-temperature-humidity/
 Adafruit_BME280 bme;
-const double SEALEVELPRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
+const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
 
 void setup(){
-    USB_SERIAL.begin(9600);
-    MissionTime timer;
+    MY_USB_SERIAL.begin(9600);
 }
 
 void loop(){
@@ -23,12 +26,36 @@ void loop(){
 }
 
 class Telemetry{
-    /*ID,MISSION_TIME,TEMPERATURE,BAROMETRIC_ALTITUDE,HUMIDITY,GPS_ALTITUDE,GPS_LONGITUDE,GPS_LATITUDE,TILT_X,TILT_Y,TILTZ,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,O3_CONCENTRATION,VOLTAGE,CHECKSUM*/
+    /*ID,MISSION_TIME,PACKET_COUNT,TEMPERATURE,BAROMETRIC_ALTITUDE,HUMIDITY,GPS_TIME,GPS_ALTITUDE,GPS_LONGITUDE,GPS_LATITUDE,TILT_X,TILT_Y,TILTZ,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,O3_CONCENTRATION,VOLTAGE,CHECKSUM*/
     private:
         const String ID = "12";
-        int packetCount;
+        uint32_t packetCount;
+        MissionTime timer;
     public:
         String createPacket(){
+            String packet = ID + "," +
+                            String(packetCount) + "," +
+                            timer.get_time() + "," +
+                            String(bme.readTemperature()) + "," +
+                            String(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)) + "," +
+                            String(bme.readHumidity()) + "," // TODO: add readings from all components
+                            ;
+
+
+            return packet + getChecksum(packet);
+        }
+
+        void telemetryInit(){
+            packetCount = 0;
+            timer.reset();
+        }
+
+        String getChecksum(String data){
+            byte checksum = 0;
+            for (char ch : data){
+                checksum ^= ch;
+            }
+            return String(checksum,HEX);
         }
 };
 
