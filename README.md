@@ -6,4 +6,4 @@ Place for teensy related code along with flowcharts
 The piece of program running on the Teensy 4.0 inside KACAT
 
 ## Ground Control Station
-Teh piece of program running on the Teensy 4.0 on the ground
+The piece of program running on the Teensy 4.0 on the ground
