@@ -14,6 +14,13 @@
             "includePath": [
                 "C:\\Users\\adamg\\AppData\\Local\\Temp\\arduino\\sketches\\0C08503D84C0DD0D4D7B7B33D06050D7\\pch",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.58.1\\cores\\teensy4",
+                "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.58.1\\libraries\\Wire",
+                "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.58.1\\libraries\\SD\\src",
+                "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.58.1\\libraries\\SdFat\\src",
+                "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.58.1\\libraries\\SPI",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_Unified_Sensor",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_BME280_Library",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_BusIO",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\11.3.1\\arm\\arm-none-eabi\\include\\c++\\11.3.1",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\11.3.1\\arm\\arm-none-eabi\\include\\c++\\11.3.1\\arm-none-eabi",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\11.3.1\\arm\\arm-none-eabi\\include\\c++\\11.3.1\\backward",
