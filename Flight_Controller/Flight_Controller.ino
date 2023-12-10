@@ -16,14 +16,21 @@ const double SEALEVELPRESSURE_HPA = (1013.25); // FIXME: replace by value true l
 void setup(){
     USB_SERIAL.begin(9600);
     MissionTime timer;
-    
 }
 
 void loop(){
 
 }
 
-
+class Telemetry{
+    /*ID,MISSION_TIME,TEMPERATURE,BAROMETRIC_ALTITUDE,HUMIDITY,GPS_ALTITUDE,GPS_LONGITUDE,GPS_LATITUDE,TILT_X,TILT_Y,TILTZ,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,O3_CONCENTRATION,VOLTAGE,CHECKSUM*/
+    private:
+        const String ID = "12";
+        int packetCount;
+    public:
+        String createPacket(){
+        }
+};
 
 class MissionTime{
     private:
@@ -46,7 +53,7 @@ class MissionTime{
             minutes = (elapsedTime % 3600) / 60;
             hours = elapsedTime / 3600;
 
-            char buffer[9];
+            char buffer[9]; // HH:MM:SS0
             snprintf(buffer, sizeof(buffer), "%02u:%02u:%02u", hours, minutes, seconds);
 
             return String(buffer);
