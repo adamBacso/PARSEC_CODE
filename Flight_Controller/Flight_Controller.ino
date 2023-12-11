@@ -94,11 +94,13 @@ class Telemetry{
         }
 
         void write(){
-            File logFile = SD.open("logFile.txt", FILE_WRITE);
-            if (logFile){
-                logFile.println(parse());
+            if (SD.begin(chipSelect)){
+                File logFile = SD.open("logFile.txt", FILE_WRITE);
+                if (logFile){
+                    logFile.println(parse());
+                }
+                logFile.close();
             }
-            logFile.close();
         }
 
         void communicate(){
