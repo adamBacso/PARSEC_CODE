@@ -12,23 +12,38 @@
 
 // SERIAL COMMS
 // serial through USB
-#define MY_USB_SERIAL               Serial      
-// serial through pin(1,0) [TX,RX]
-#define COMMS_SERIAL                Serial1     
-// serial through pin(8,7) [TX,RX]
-#define GPS_SERIAL                  Serial2
+#define MY_USB_SERIAL   Serial      
+// COMMS - serial through pin(1,0) [TX,RX]
+#define COMMS_SERIAL    Serial1     
+// GPS - serial through pin(8,7) [TX,RX]
+#define GPS_SERIAL      Serial2
 
 // BME280
 // https://randomnerdtutorials.com/bme280-sensor-arduino-pressure-temperature-humidity/
 Adafruit_BME280 bme;
 // GLOBALS
-const int chipSelect = 10;
+const int sdCardChipSelect = 10;
 int mode = 0;
 
+class Led {
+    public:
+        void init(){
+            pinMode(LED_BUILTIN,OUTPUT);
+            digitalWrite(LED_BUILTIN,LOW);
+        }
+
+        void flash(){
+            digitalWrite(LED_BUILTIN,HIGH);
+            delay(25);
+            digitalWrite(LED_BUILTIN,LOW);
+        }
+};
 class MissionTime{
     private:
         unsigned long startTime;
         unsigned int seconds, minutes, hours;
+
+        unsigned long processStart;
     public:
         MissionTime(){
             reset();
@@ -37,6 +52,7 @@ class MissionTime{
         void reset(){
             startTime = millis();
             seconds=0, minutes=0, hours=0;
+            processStart = 0;
         }
 
         String get_time(){
@@ -51,14 +67,23 @@ class MissionTime{
 
             return String(buffer);
         }
+
+        void true_sleep(int milli){
+            delay(milli - (millis()-processStart));
+            processStart = millis();
+        }
 };
 
+MissionTime timer;
 class Telemetry{
     /*ID,MISSION_TIME,PACKET_COUNT,TEMPERATURE,BAROMETRIC_ALTITUDE,HUMIDITY,GPS_TIME,GPS_ALTITUDE,GPS_LONGITUDE,GPS_LATITUDE,TILT_X,TILT_Y,TILTZ,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,O3_CONCENTRATION,VOLTAGE,CHECKSUM*/
     private:
-        const String ID = "12";
+        uint16_t ID = 12;
         int packetCount = 0;
-        MissionTime timer;
+
+        int frequency;
+        int commsBaudRate;
+        int percentActive;
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
@@ -92,30 +117,27 @@ class Telemetry{
         }
 
     public:
-        String parse(){
+        String parse(){ // FIXME: change to send numeric data as opposed to String (String: 1B per character; float: 4B per number)
             String packet = "";
-            packet += ID + ",";
+            packet += this->format_data(ID) + ",";
             packet += this->format_data(packetCount);
             packet += timer.get_time() + ",";
             /*
             packet += this->format_data(bme.readTemperature());
-            this->send(packet);
             packet += this->format_data(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));
-            this->send(packet);
             packet += this->format_data(bme.readHumidity()); // TODO: add readings for all components
             */
             packetCount=packetCount+1;
-            return packet + this->getChecksum(packet);
+            return packet + this->get_checksum(packet);
         }
 
         void init(){
             packetCount = 0;
             timer.reset();
-            this->send("Telemetry INITIALIZING ..........");
-            this->send("OK");
+            this->send("Telemetry INIT: OK");
         }
 
-        String getChecksum(String data){
+        String get_checksum(String data){
                     byte checksum = 0;
                     for (char ch : data){
                         checksum ^= ch;
@@ -154,7 +176,7 @@ class Telemetry{
         }
 
         void write(){
-            if (SD.begin(chipSelect)){
+            if (SD.begin(sdCardChipSelect)){
                 File logFile = SD.open("logFile.txt", FILE_WRITE);
                 if (logFile){
                     logFile.println(this->parse());
@@ -163,6 +185,15 @@ class Telemetry{
             }
         }
 
+        
+        void sd_validate(){        
+            //if (!SD.begin(chipSelect)){
+            //    // TODO: indicate that no SD card
+            //    while (1){
+            //        // stop here
+            //    }
+            //}
+        }
 
         void communicate(int mode = 0){
             this->write();
@@ -170,33 +201,17 @@ class Telemetry{
         }
 };
 
-class Led{
-    public:
-        void init(){
-            pinMode(LED_BUILTIN,OUTPUT);
-            digitalWrite(LED_BUILTIN,LOW);
-        }
 
-        void flash(){
-            digitalWrite(LED_BUILTIN,HIGH);
-            delay(25);
-            digitalWrite(LED_BUILTIN,LOW);
-        }
-};
 
 Telemetry data;
 Led led;
 
+
 void setup(){
     
     MY_USB_SERIAL.begin(9600);
-     // TODO: add component validation
-    //if (!SD.begin(chipSelect)){
-    //    // TODO: indicate that no SD card
-    //    while (1){
-    //        // stop here
-    //    }
-    //}
+    // TODO: add component validation
+    data.sd_validate();
     data.init();
     led.init();
     mode = 1;
@@ -207,5 +222,5 @@ void loop(){
     //data.send(1);
     data.send();
     led.flash();
-    delay(1000);
+    timer.true_sleep(1000);
 }
