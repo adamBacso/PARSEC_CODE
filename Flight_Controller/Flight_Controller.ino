@@ -1,3 +1,4 @@
+#include <LoRa.h>
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
@@ -12,7 +13,7 @@
 
 // SERIAL COMMS  
 // COMMS - **Serial1** through pin(1,0) [TX,RX]      // USB SERIAL - **Serial** through USB port
-#define COMMS_SERIAL    Serial  
+#define COMMS_SERIAL    Serial  // FIXME: change to Serial1 on final version
 // GPS - serial through pin(8,7) [TX,RX]
 #define GPS_SERIAL      Serial2
 
@@ -23,11 +24,10 @@
 Adafruit_BME280 bme;
 // GLOBALS
 const int SD_CARD_CHIP_SELECT = 10;
-int mode = 0;
 
 class Led {
     public:
-        void init(){
+        void begin(){
             pinMode(LED_BUILTIN,OUTPUT);
             digitalWrite(LED_BUILTIN,LOW);
         }
@@ -83,26 +83,29 @@ class Telemetry{
     /*ID,MISSION_TIME,PACKET_COUNT,TEMPERATURE,BAROMETRIC_ALTITUDE,HUMIDITY,GPS_TIME,GPS_ALTITUDE,GPS_LONGITUDE,GPS_LATITUDE,TILT_X,TILT_Y,TILTZ,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,O3_CONCENTRATION,VOLTAGE,CHECKSUM*/
     private:
         bool broadcasting = false;
+        uint32_t broadcastStartTime;
 
         float ID = 12;
         float packetCount = 0;
 
-        int frequency;
-        int commsBaudRate;
-        int percentActive;
+        int frequency = 866E6;
+        int commsBaudRate = 9600;
+        float percentActive = 0.1;
+        int sleepAmount;
 
         static const int COMPONENT_COUNT = 4;
 
         float printBuffer[COMPONENT_COUNT+3] = {0};
+        unsigned long bitSize;
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
         void prints(float data, int index, char separator = ','){
-            COMMS_SERIAL.print(data);
-            COMMS_SERIAL.print(separator);
-
             if (index < COMPONENT_COUNT+3){
-               this-> printBuffer[index] = data;
+                COMMS_SERIAL.print(data);
+                COMMS_SERIAL.print(separator);
+                this-> printBuffer[index] = data;
+                bitSize += sizeof(data)*8 + sizeof(separator)*8;
             }
         }
 
@@ -122,17 +125,24 @@ class Telemetry{
             return packet + this->get_checksum(packet);
         }
     */
-        void startBroadcast(){
+        void start_broadcast(){
             broadcasting = true;
-            while (broadcasting){
-                this->serial_send(); 
-                timer.true_sleep(1000); // FIXME: replace by threadless sleep; FIXME: determine sleep amount from percentActive and commsBaudRate
+        }
+
+        void broadcast(){
+            uint32_t currentTime = millis();
+            uint32_t startTime = broadcastStartTime;
+            if (broadcasting && (startTime+sleepAmount-10<currentTime&&startTime+sleepAmount+10>currentTime)){
+                broadcastStartTime = currentTime;
+                this->telemetry_send();
+                set_sleep_amount();
             }
         }
 
-        void serial_send(){
+        void telemetry_send(){
             int dataIndex = 0;
-            // HEADER
+            bitSize = 0;
+            
             this->prints(ID, dataIndex++);
             this->prints(packetCount++, dataIndex++);
             this->prints(timer.get_time(), dataIndex++);
@@ -142,27 +152,42 @@ class Telemetry{
                 this->prints(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA), dataIndex++);
                 this->prints(bme.readTemperature(), dataIndex++);
                 this->prints(bme.readHumidity(), dataIndex++);
+            }else{
+                this->prints(0, dataIndex++);
+                this->prints(0, dataIndex++);
+                this->prints(0, dataIndex++);
             }
 
             // CHECKSUM
             //activeSerial.print('*'); activeSerial.println(get_checksum(printBuffer, valueCount));
             COMMS_SERIAL.print('*');
-            COMMS_SERIAL.println(this->get_checksum(printBuffer, dataIndex));
+            byte checksum = this->get_checksum(printBuffer, dataIndex);
+            COMMS_SERIAL.println(checksum);
+            bitSize += sizeof('*')*8 + sizeof(checksum)*8;
 
             this->write(printBuffer, dataIndex);
         }
 
-        void init(){
+        void begin(){
+            COMMS_SERIAL.begin(commsBaudRate);
+            while (!COMMS_SERIAL){
+            }
+            sleepAmount = 0;
             packetCount = 0;
             timer.reset();
+            this->start_broadcast();
             this->send("Telemetry INIT: OK");
+        }
+
+        void set_sleep_amount(){
+            sleepAmount = (1-percentActive) * (bitSize / commsBaudRate);
         }
 
         byte get_checksum(float data[], int size) {
             byte checksum = 0;
             for (int i = 0; i < size; i++) {
                 byte* bytes = reinterpret_cast<byte*>(&data[i]);
-                for (int j = 0; j < sizeof(float); j++) {
+                for (unsigned int j = 0; j < sizeof(float); j++) {
                     checksum ^= bytes[j];
                 }
             }
@@ -205,16 +230,14 @@ Led led;
 
 
 void setup(){
-    
-    COMMS_SERIAL.begin(9600);
     // TODO: add component validation
     data.sd_validate();
-    data.init();
-    led.init();
-    mode = 1;
+    data.begin();
+    led.begin();
     led.flash();
 }
 
 void loop(){
+    data.broadcast();
     led.flash();
 }
