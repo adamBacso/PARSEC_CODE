@@ -84,7 +84,7 @@ class Telemetry{
     /*ID,MISSION_TIME,PACKET_COUNT,TEMPERATURE,BAROMETRIC_ALTITUDE,HUMIDITY,GPS_TIME,GPS_ALTITUDE,GPS_LONGITUDE,GPS_LATITUDE,TILT_X,TILT_Y,TILTZ,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,O3_CONCENTRATION,VOLTAGE,CHECKSUM*/
     private:
         bool broadcasting = false;
-        uint32_t broadcastStartTime;
+        uint32_t broadcastStartTime = 0;
 
         int ID = 12;
         int packetCount = 0;
@@ -150,14 +150,23 @@ class Telemetry{
         }
 
         void broadcast(){
+            /*
             uint32_t currentTime = millis();
             uint32_t startTime = broadcastStartTime;
             if (broadcasting && (startTime+sleepAmount<currentTime)){
+                COMMS_SERIAL.println(currentTime);COMMS_SERIAL.println(startTime);COMMS_SERIAL.println(sleepAmount);
                 broadcastStartTime = currentTime;
                 this->telemetry_send();
-                set_sleep_amount();
+                //set_sleep_amount();
                 led.flash();
             }
+            */
+            if (broadcasting && broadcastStartTime-millis()>1000){
+                broadcastStartTime = millis();
+                this->telemetry_send();
+                //set_sleep_amount();
+            }
+
         }
 
         void telemetry_send(){
@@ -245,7 +254,6 @@ class Telemetry{
 
 Telemetry data;
 
-
 void setup(){
     // TODO: add component validation
     data.sd_validate();
@@ -256,4 +264,5 @@ void setup(){
 
 void loop(){
     data.broadcast();
+
 }
