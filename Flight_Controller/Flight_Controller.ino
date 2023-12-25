@@ -1,8 +1,9 @@
+#include <CRC32.h>
+
 #include <LoRa.h>
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
-#include <FastCRC.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 
@@ -97,7 +98,7 @@ class Telemetry{
         static const int COMPONENT_COUNT = 4;
 
         std::string printBuffer = "";
-        unsigned long bitSize;
+        uint32_t bitSize;
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
@@ -191,7 +192,7 @@ class Telemetry{
 
             // CHECKSUM
             COMMS_SERIAL.print('*');
-            byte checksum = this->get_checksum(printBuffer, dataIndex);
+            String checksum = this->get_checksum(printBuffer);
             COMMS_SERIAL.println(checksum);
             bitSize += sizeof('*') + sizeof(checksum);
             bitSize *= 8;
@@ -213,13 +214,11 @@ class Telemetry{
         void set_sleep_amount(){
             sleepAmount = 1000 - (bitSize / commsBaudRate)*1000;
         }
-
-        byte get_checksum(std::string data, int size) {
-            byte checksum = 0;
-            for (char c : data){
-                checksum ^= c;
-            }
-            return checksum;
+        String get_checksum(std::string data) {
+            uint32_t checksum = CRC32::calculate(data.c_str(), data.length());
+            char checksumStr[3];
+            snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
+            return String(checksumStr);
         }
 
         void send(const String& message){
