@@ -38,6 +38,7 @@ class Led {
             digitalWrite(LED_BUILTIN,LOW);
         }
 };
+Led led;
 
 class MissionTime{
     private:
@@ -132,10 +133,12 @@ class Telemetry{
         void broadcast(){
             uint32_t currentTime = millis();
             uint32_t startTime = broadcastStartTime;
-            if (broadcasting && (startTime+sleepAmount-10<currentTime&&startTime+sleepAmount+10>currentTime)){
+            if (broadcasting && (startTime+sleepAmount<currentTime)){
+                //COMMS_SERIAL.println("sending data: start");
                 broadcastStartTime = currentTime;
                 this->telemetry_send();
                 set_sleep_amount();
+                led.flash();
             }
         }
 
@@ -159,7 +162,6 @@ class Telemetry{
             }
 
             // CHECKSUM
-            //activeSerial.print('*'); activeSerial.println(get_checksum(printBuffer, valueCount));
             COMMS_SERIAL.print('*');
             byte checksum = this->get_checksum(printBuffer, dataIndex);
             COMMS_SERIAL.println(checksum);
@@ -172,7 +174,7 @@ class Telemetry{
             COMMS_SERIAL.begin(commsBaudRate);
             while (!COMMS_SERIAL){
             }
-            sleepAmount = 0;
+            sleepAmount = 1000;
             packetCount = 0;
             timer.reset();
             this->start_broadcast();
@@ -226,7 +228,6 @@ class Telemetry{
 
 
 Telemetry data;
-Led led;
 
 
 void setup(){
@@ -239,5 +240,4 @@ void setup(){
 
 void loop(){
     data.broadcast();
-    led.flash();
 }
