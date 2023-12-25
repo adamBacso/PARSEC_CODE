@@ -161,7 +161,7 @@ class Telemetry{
                 led.flash();
             }
             */
-            if (broadcasting && broadcastStartTime-millis()>1000){
+            if (broadcasting && (millis()-broadcastStartTime>=1000)){
                 broadcastStartTime = millis();
                 this->telemetry_send();
                 //set_sleep_amount();
@@ -172,6 +172,7 @@ class Telemetry{
         void telemetry_send(){
             int dataIndex = 0;
             bitSize = 0;
+            printBuffer = "";
             
             this->prints(ID);
             this->prints(packetCount++);
@@ -195,7 +196,7 @@ class Telemetry{
             bitSize += sizeof('*') + sizeof(checksum);
             bitSize *= 8;
 
-            this->write(printBuffer, dataIndex);
+            //this->write(printBuffer, dataIndex);
         }
 
         void begin(){
