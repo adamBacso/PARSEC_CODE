@@ -57,8 +57,8 @@ class MissionTime{
             processStart = 0;
         }
 
-        float get_time(){
-            unsigned long elapsedTime = (millis()-startTime)/1000; // in seconds
+        uint32_t get_time(){
+            uint32_t elapsedTime = (millis()-startTime)/1000; // in seconds
 
             seconds = elapsedTime % 60;
             minutes = (elapsedTime % 3600) / 60;
@@ -86,8 +86,8 @@ class Telemetry{
         bool broadcasting = false;
         uint32_t broadcastStartTime;
 
-        float ID = 12;
-        float packetCount = 0;
+        int ID = 12;
+        int packetCount = 0;
 
         int frequency = 866E6;
         int commsBaudRate = 9600;
@@ -96,18 +96,37 @@ class Telemetry{
 
         static const int COMPONENT_COUNT = 4;
 
-        float printBuffer[COMPONENT_COUNT+3] = {0};
+        std::string printBuffer = "";
         unsigned long bitSize;
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
-        void prints(float data, int index, char separator = ','){
-            if (index < COMPONENT_COUNT+3){
-                COMMS_SERIAL.print(data);
-                COMMS_SERIAL.print(separator);
-                this-> printBuffer[index] = data;
-                bitSize += sizeof(data)*8 + sizeof(separator)*8;
-            }
+        void prints(float data, char separator = ','){
+            COMMS_SERIAL.print(data);
+            COMMS_SERIAL.print(separator);
+            printBuffer += std::to_string(data);
+            bitSize += sizeof(data) + sizeof(separator);
+        }
+
+        void prints(int data, char separator = ','){
+            COMMS_SERIAL.print(data);
+            COMMS_SERIAL.print(separator);
+            printBuffer += std::to_string(data);
+            bitSize += sizeof(data) + sizeof(separator);
+        }
+
+        void prints(uint32_t data, char separator = ','){
+            COMMS_SERIAL.print(data);
+            COMMS_SERIAL.print(separator);
+            printBuffer += std::to_string(data);
+            bitSize += sizeof(data) + sizeof(separator);
+        }
+
+        void prints(char data, char separator = ','){
+            COMMS_SERIAL.print(data);
+            COMMS_SERIAL.print(separator);
+            printBuffer += std::to_string(data) + separator;
+            bitSize += sizeof(data) + sizeof(separator);
         }
 
     public:
@@ -134,7 +153,6 @@ class Telemetry{
             uint32_t currentTime = millis();
             uint32_t startTime = broadcastStartTime;
             if (broadcasting && (startTime+sleepAmount<currentTime)){
-                //COMMS_SERIAL.println("sending data: start");
                 broadcastStartTime = currentTime;
                 this->telemetry_send();
                 set_sleep_amount();
@@ -146,26 +164,27 @@ class Telemetry{
             int dataIndex = 0;
             bitSize = 0;
             
-            this->prints(ID, dataIndex++);
-            this->prints(packetCount++, dataIndex++);
-            this->prints(timer.get_time(), dataIndex++);
+            this->prints(ID);
+            this->prints(packetCount++);
+            this->prints(timer.get_time());
 
             // BME280
             if (bme.begin()){
-                this->prints(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA), dataIndex++);
-                this->prints(bme.readTemperature(), dataIndex++);
-                this->prints(bme.readHumidity(), dataIndex++);
+                this->prints(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));
+                this->prints(bme.readTemperature());
+                this->prints(bme.readHumidity());
             }else{
-                this->prints(0, dataIndex++);
-                this->prints(0, dataIndex++);
-                this->prints(0, dataIndex++);
+                this->prints(0);
+                this->prints(0);
+                this->prints(0);
             }
 
             // CHECKSUM
             COMMS_SERIAL.print('*');
             byte checksum = this->get_checksum(printBuffer, dataIndex);
             COMMS_SERIAL.println(checksum);
-            bitSize += sizeof('*')*8 + sizeof(checksum)*8;
+            bitSize += sizeof('*') + sizeof(checksum);
+            bitSize *= 8;
 
             this->write(printBuffer, dataIndex);
         }
@@ -182,16 +201,13 @@ class Telemetry{
         }
 
         void set_sleep_amount(){
-            sleepAmount = (1-percentActive) * (bitSize / commsBaudRate);
+            sleepAmount = 1000 - (bitSize / commsBaudRate)*1000;
         }
 
-        byte get_checksum(float data[], int size) {
+        byte get_checksum(std::string data, int size) {
             byte checksum = 0;
-            for (int i = 0; i < size; i++) {
-                byte* bytes = reinterpret_cast<byte*>(&data[i]);
-                for (unsigned int j = 0; j < sizeof(float); j++) {
-                    checksum ^= bytes[j];
-                }
+            for (char c : data){
+                checksum ^= c;
             }
             return checksum;
         }
@@ -200,7 +216,7 @@ class Telemetry{
             COMMS_SERIAL.println(message);            
         }
 
-        void write(float data[], int valueCount){
+        void write(std::string data, int valueCount){
             if (SD.begin(SD_CARD_CHIP_SELECT)){
                 File logFile = SD.open("logFile.txt", FILE_WRITE);
                 if (logFile){
