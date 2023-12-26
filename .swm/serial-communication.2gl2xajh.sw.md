@@ -3,7 +3,7 @@ title: Serial Communication
 ---
 This is how the serial communication works in the program.
 
-<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="14">
+<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="15">
 
 ---
 
@@ -21,9 +21,9 @@ Defining the serial ports used for communicating and for gps.
 
 </SwmSnippet>
 
-Communication is handled by the <SwmToken path="/Flight_Controller/Flight_Controller.ino" pos="83:2:2" line-data="class Telemetry{">`Telemetry`</SwmToken> class. In the main ,  is called. This checks if  <SwmToken path="/Flight_Controller/Flight_Controller.ino" pos="86:3:3" line-data="        bool broadcasting = false;">`broadcasting`</SwmToken> is `True` and wether or not the program has waited enough to broadcast yet again. Printing through the serial port is done on a component-by-component basis. If a component is unavailable, the `0` is passed in as its value.
+Communication is handled by the <SwmToken path="/Flight_Controller/Flight_Controller.ino" pos="84:2:2" line-data="class Telemetry{">`Telemetry`</SwmToken> class. In the main ,  is called. This checks if  <SwmToken path="/Flight_Controller/Flight_Controller.ino" pos="87:3:3" line-data="        bool broadcasting = false;">`broadcasting`</SwmToken> is `True` and wether or not the program has waited enough to broadcast yet again. Printing through the serial port is done on a component-by-component basis. If a component is unavailable, the `0` is passed in as its value.
 
-<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="171">
+<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="172">
 
 ---
 
@@ -48,15 +48,17 @@ Communication is handled by the <SwmToken path="/Flight_Controller/Flight_Contro
 
 ## Sleeping
 
-<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="203">
+<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="204">
 
 ---
 
-sleeps for the remainder of a second
+Sleeping for the amount of time not active minus the elapsed process time
 
-```arduino
-        void set_sleep_amount(){
-            sleepAmount = 1000 - (bitSize / commsBaudRate)*1000;
+```
+        void set_sleep_amount(uint32_t elapsedTime){
+            uint32_t transmissionTime = (bitSize / commsBaudRate) * 1000;
+            elapsedTime -= transmissionTime;
+            sleepAmount = (1-percentActive)*10 * transmissionTime - elapsedTime;
         }
 ```
 
@@ -64,6 +66,46 @@ sleeps for the remainder of a second
 
 </SwmSnippet>
 
-<SwmToken path="/Flight_Controller/Flight_Controller.ino" pos="100:5:5" line-data="        unsigned long bitSize;">`bitSize`</SwmToken>  /  <SwmToken path="/Flight_Controller/Flight_Controller.ino" pos="93:3:3" line-data="        int commsBaudRate = 9600;">`commsBaudRate`</SwmToken>  = time it takes to transmit a message (in seconds)
+<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="205">
+
+---
+
+Calculate the time it takes to transmit  data of <SwmToken path="/Flight_Controller/Flight_Controller.ino" pos="101:3:3" line-data="        uint32_t bitSize;">`bitSize`</SwmToken> bits through a Serial port with a baud rate of <SwmToken path="/Flight_Controller/Flight_Controller.ino" pos="94:3:3" line-data="        int commsBaudRate = 9600;">`commsBaudRate`</SwmToken> bps.
+
+```arduino
+            uint32_t transmissionTime = (bitSize / commsBaudRate) * 1000;
+```
+
+---
+
+</SwmSnippet>
+
+<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="206">
+
+---
+
+Subtract transmission time as we are interested in the externalities
+
+```arduino
+            elapsedTime -= transmissionTime;
+```
+
+---
+
+</SwmSnippet>
+
+<SwmSnippet path="/Flight_Controller/Flight_Controller.ino" line="207">
+
+---
+
+Calculate the time when not active and subtract the elapsed time
+
+```arduino
+            sleepAmount = (1-percentActive)*10 * transmissionTime - elapsedTime;
+```
+
+---
+
+</SwmSnippet>
 
 <SwmMeta version="3.0.0" repo-id="Z2l0aHViJTNBJTNBUEFSU0VDX0NPREUlM0ElM0FhZGFtQmFjc28=" repo-name="PARSEC_CODE"><sup>Powered by [Swimm](https://app.swimm.io/)</sup></SwmMeta>
