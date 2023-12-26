@@ -1,4 +1,3 @@
-
 #include <LoRa.h>
 #include <Wire.h>
 #include <SD.h>
@@ -23,7 +22,7 @@
 
 
 // GLOBALS
-const int SD_CARD_CHIP_SELECT = 10;
+
 
 class LightSensor {
     private:
@@ -36,6 +35,28 @@ class LightSensor {
         float readIntensity(){
             float sensorValue = analogRead(analogPin);
             return sensorValue/resolution*operatingVoltage;
+        }
+};
+
+class SDCard {
+    private:
+       const int SD_CARD_CHIP_SELECT;
+    public:
+        SDCard(int cs) : SD_CARD_CHIP_SELECT(cs) {
+            if (SD.begin(SD_CARD_CHIP_SELECT)){
+                File logFile = SD.open("logFile.txt", FILE_WRITE);
+                logFile.close();
+            }
+        }
+
+        void write(std::string telemetry){
+            if (SD.begin(SD_CARD_CHIP_SELECT)){
+                File logFile = SD.open("logFile.txt", FILE_WRITE);
+                if (logFile){
+                    logFile.println(telemetry.c_str());
+                }
+                logFile.close();
+            }
         }
 };
 
@@ -120,6 +141,7 @@ class Telemetry{
 
         std::string printBuffer = "";
         uint32_t bitSize;
+        SDCard sd = SDCard(10);
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
@@ -237,7 +259,7 @@ class Telemetry{
             bitSize += sizeof('*') + sizeof(checksum);
             bitSize *= 8;
 
-            //this->write(printBuffer, dataIndex);
+            sd.write(printBuffer);
         }
 
         void begin(){
@@ -269,17 +291,7 @@ class Telemetry{
         }
 
         void write(std::string data, int valueCount){
-            if (SD.begin(SD_CARD_CHIP_SELECT)){
-                File logFile = SD.open("logFile.txt", FILE_WRITE);
-                if (logFile){
-                    for (int i = 0; i<valueCount; ){
-                        logFile.print(printBuffer[i]);
-                        logFile.print(',');
-                    }
-                    logFile.println();
-                }
-                logFile.close();
-            }
+            
         }
 
         
