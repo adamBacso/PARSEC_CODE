@@ -3,13 +3,15 @@ title: Uploading to Teensy from VS Code
 ---
 # **Uploading a Sketch to Teensy 4.0 Using Visual Studio Code**
 
+# *!!! May contain inaccuracies !!!*
+
 This documentation guides you through the process of uploading a sketch to a Teensy 4.0 microcontroller using Visual Studio Code. By following these steps, you'll be able to leverage the power of Visual Studio Code for Arduino development and deploy your code onto the Teensy 4.0.
 
 ## **Prerequisites**
 
 1. **Teensy 4.0 Board:** Ensure that you have a Teensy 4.0 microcontroller board.
 
-2. **Visual Studio Code:** Install Visual Studio Code on your computer. You can download it from https://code.visualstudio.com/.
+2. **Visual Studio Code:** Install Visual Studio Code on your computer. You can download it from <https://code.visualstudio.com/>.
 
 3. **Arduino Extension for Visual Studio Code:** Install the "Arduino" extension for Visual Studio Code. Open VS Code, go to the Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`), search for "Arduino," and install the one provided by Microsoft.
 
@@ -29,8 +31,7 @@ Open Visual Studio Code on your computer.
 
 4. Select the latest version and click install
 
-
-1. Close the Board Manager.
+5. Close the Board Manager.
 
 ### **Step 3: Install Teensyduino Core**
 
