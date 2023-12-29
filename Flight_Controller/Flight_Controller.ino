@@ -43,6 +43,10 @@ class SDCard {
        const int SD_CARD_CHIP_SELECT;
     public:
         SDCard(int cs) : SD_CARD_CHIP_SELECT(cs) {
+            this->begin();
+        }
+
+        void begin(){
             if (SD.begin(SD_CARD_CHIP_SELECT)){
                 File logFile = SD.open("logFile.txt", FILE_WRITE);
                 logFile.close();
@@ -180,21 +184,6 @@ class Telemetry{
         }
 
     public:
-    /*
-        String parse(){
-            String packet = "";
-            packet += this->format_data(ID) + ",";
-            packet += this->format_data(packetCount);
-            packet += timer.get_time() + ",";
-            
-            packet += this->format_data(bme.readTemperature());
-            packet += this->format_data(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));
-            packet += this->format_data(bme.readHumidity()); // TODO: add readings for all components
-            
-            packetCount=packetCount+1;
-            return packet + this->get_checksum(packet);
-        }
-    */
         void start_broadcast(){
             broadcasting = true;
         }
@@ -313,7 +302,6 @@ Telemetry data;
 
 void setup(){
     // TODO: add component validation
-    data.sd_validate();
     data.begin();
     led.begin();
     led.flash();
@@ -323,5 +311,4 @@ void setup(){
 
 void loop(){
     data.broadcast();
-
 }
