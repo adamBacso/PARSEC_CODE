@@ -255,7 +255,7 @@ class Telemetry{
             bitSize += sizeof('*') + sizeof(checksum);
             bitSize *= 8;
 
-            sd.write(printBuffer);
+            //sd.write(printBuffer);
         }
 
         void begin(){
