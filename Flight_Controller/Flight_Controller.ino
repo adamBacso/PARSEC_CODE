@@ -38,32 +38,6 @@ class LightSensor {
         }
 };
 
-class SDCard {
-    private:
-       const int SD_CARD_CHIP_SELECT;
-    public:
-        SDCard(int cs) : SD_CARD_CHIP_SELECT(cs) {
-            this->begin();
-        }
-
-        void begin(){
-            if (SD.begin(SD_CARD_CHIP_SELECT)){
-                File logFile = SD.open("logFile.txt", FILE_WRITE);
-                logFile.close();
-            }
-        }
-
-        void write(std::string telemetry){
-            if (SD.begin(SD_CARD_CHIP_SELECT)){
-                File logFile = SD.open("logFile.txt", FILE_WRITE);
-                if (logFile){
-                    logFile.println(telemetry.c_str());
-                }
-                logFile.close();
-            }
-        }
-};
-
 class Led {
     public:
         void begin(){
@@ -145,7 +119,6 @@ class Telemetry{
 
         std::string printBuffer = "";
         uint32_t bitSize;
-        SDCard sd = SDCard(10);
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
@@ -200,7 +173,6 @@ class Telemetry{
                 set_sleep_amount(elapsedTime);
                 led.flash();
             }
-
         }
 
         void telemetry_send(){
@@ -254,8 +226,6 @@ class Telemetry{
             COMMS_SERIAL.println(checksum);
             bitSize += sizeof('*') + sizeof(checksum);
             bitSize *= 8;
-
-            //sd.write(printBuffer);
         }
 
         void begin(){
@@ -310,8 +280,6 @@ void setup(){
     // TODO: add component validation
     data.begin();
     led.begin();
-    led.flash();
-    delay(1000);
     led.flash();
     COMMS_SERIAL.println("Setup: OK");
 }
