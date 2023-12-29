@@ -87,7 +87,7 @@ class MissionTime{
 
         float get_time(){
             uint32_t elapsedTime = (millis()-missionStartTime) / 100; // in deciseconds xD
-            return float(elapsedTime/10); // should return seconds to one decimal precision
+            return float(elapsedTime)/10; // should return seconds to one decimal precision
         }
 
         void true_sleep(int milli){
@@ -246,7 +246,7 @@ class Telemetry{
             sleepAmount = (1-percentActive)*10 * transmissionTime - elapsedTime;
         }
 
-        String get_checksum(std::string data) {
+        String get_checksum(std::string data){
             unsigned int checksum = CRC32::calculate(data.c_str(), data.length());
             char checksumStr[3];
             snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
