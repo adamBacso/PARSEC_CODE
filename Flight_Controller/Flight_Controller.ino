@@ -86,7 +86,7 @@ class MissionTime{
         unsigned long processStart;
     public:
         MissionTime(){
-            reset();
+            this->reset();
         }
 
         void reset(){
@@ -184,6 +184,10 @@ class Telemetry{
         }
 
     public:
+        Telemetry(){
+            this->begin();
+        }
+
         void start_broadcast(){
             broadcasting = true;
         }
@@ -194,6 +198,7 @@ class Telemetry{
                 broadcastStartTime = millis();
                 this->telemetry_send();
                 set_sleep_amount(elapsedTime);
+                led.flash();
             }
 
         }
@@ -307,6 +312,7 @@ void setup(){
     led.flash();
     delay(1000);
     led.flash();
+    COMMS_SERIAL.println("Setup: OK");
 }
 
 void loop(){
