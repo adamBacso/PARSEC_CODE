@@ -131,7 +131,7 @@ class Telemetry{
         int frequency = 866E6;
         int commsBaudRate = 9600;
         float percentActive = 0.1;
-        int sleepAmount;
+        uint32_t sleepAmount;
 
         // **COMPONENTS**
         static const int COMPONENT_COUNT = 4;
@@ -210,13 +210,15 @@ class Telemetry{
         }
 
         void telemetry_send(){
-            int dataIndex = 0;
             bitSize = 0;
             printBuffer = "";
             
             this->prints(ID);
             this->prints(packetCount++);
             this->prints(timer.get_time());
+
+            // SYSTEM
+            this->prints(tempmonGetTemp()); // internal temperature
 
             // BME280
             if (bme.begin()){
@@ -280,7 +282,7 @@ class Telemetry{
         }
 
         String get_checksum(std::string data) {
-            uint32_t checksum = CRC32::calculate(data.c_str(), data.length());
+            unsigned int checksum = CRC32::calculate(data.c_str(), data.length());
             char checksumStr[3];
             snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
             return String(checksumStr);
@@ -314,6 +316,8 @@ void setup(){
     data.sd_validate();
     data.begin();
     led.begin();
+    led.flash();
+    delay(1000);
     led.flash();
 }
 
