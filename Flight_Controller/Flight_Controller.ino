@@ -154,6 +154,7 @@ class Telemetry{
             COMMS_SERIAL.print(data);
             COMMS_SERIAL.print(separator);
             printBuffer += data.c_str() + separator;
+            bitSize += sizeof(data) + sizeof(separator);
         }
 
     public:
