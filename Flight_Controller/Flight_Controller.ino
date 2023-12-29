@@ -262,6 +262,7 @@ class Telemetry{
             COMMS_SERIAL.begin(commsBaudRate);
             while (!COMMS_SERIAL){
             }
+            COMMS_SERIAL.println("Setup: INIT");
             sleepAmount = 1000;
             packetCount = 0;
             timer.reset();
