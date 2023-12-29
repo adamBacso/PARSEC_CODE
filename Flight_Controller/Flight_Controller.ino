@@ -215,7 +215,7 @@ class Telemetry{
             this->prints(tempmonGetTemp()); // internal temperature
 
             // BME280
-            if (bme.begin()){
+            if (bme.begin(0x76)){
                 this->prints(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));
                 this->prints(bme.readTemperature());
                 this->prints(bme.readHumidity());
@@ -226,7 +226,7 @@ class Telemetry{
             }
 
             // MPU-6050
-            if (mpu.begin()){
+            if (mpu.begin(0x68)){
                 sensors_event_t a, g, temp;
                 mpu.getEvent(&a, &g, &temp);
                 // acceleration
