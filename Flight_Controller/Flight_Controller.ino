@@ -29,12 +29,19 @@ class LightSensor {
         int analogPin;
         float operatingVoltage;
         int resolution = 1024;
+
+        float calibrationValue = 0;
+        
     public:
         LightSensor(int pin, float voltage) : analogPin(pin), operatingVoltage(voltage){}
 
         float readIntensity(){
             float sensorValue = analogRead(analogPin);
-            return sensorValue/resolution*operatingVoltage;
+            return (sensorValue/resolution*operatingVoltage)-calibrationValue;
+        }
+
+        void calibrate(){
+            calibrationValue = this->readIntensity();
         }
 };
 
