@@ -118,42 +118,53 @@ class Telemetry{
         LightSensor guva = LightSensor(14,3.3);
 
         std::string printBuffer = "";
-        uint32_t bitSize;
+        uint32_t transmissionSize;
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
         void prints(float data, char separator = ','){
-            COMMS_SERIAL.print(data);
-            COMMS_SERIAL.print(separator);
+            if (COMMS_SERIAL){
+                COMMS_SERIAL.print(data);
+                COMMS_SERIAL.print(separator);
+            }
             printBuffer += std::to_string(data);
-            bitSize += sizeof(data) + sizeof(separator);
+            transmissionSize += sizeof(data) + sizeof(separator);
         }
 
         void prints(int data, char separator = ','){
-            COMMS_SERIAL.print(data);
-            COMMS_SERIAL.print(separator);
+            if (COMMS_SERIAL){
+                COMMS_SERIAL.print(data);
+                COMMS_SERIAL.print(separator);
+            }
             printBuffer += std::to_string(data);
-            bitSize += sizeof(data) + sizeof(separator);
+            transmissionSize += sizeof(data) + sizeof(separator);
         }
 
         void prints(uint32_t data, char separator = ','){
-            COMMS_SERIAL.print(data);
-            COMMS_SERIAL.print(separator);
+            if (COMMS_SERIAL){
+                COMMS_SERIAL.print(data);
+                COMMS_SERIAL.print(separator);
+            }
             printBuffer += std::to_string(data);
-            bitSize += sizeof(data) + sizeof(separator);
+            transmissionSize += sizeof(data) + sizeof(separator);
         }
 
         void prints(char data, char separator = ','){
-            COMMS_SERIAL.print(data);
-            COMMS_SERIAL.print(separator);
+            if (COMMS_SERIAL){
+                COMMS_SERIAL.print(data);
+                COMMS_SERIAL.print(separator);
+            }
             printBuffer += std::to_string(data) + separator;
-            bitSize += sizeof(data) + sizeof(separator);
+            transmissionSize += sizeof(data) + sizeof(separator);
         }
 
         void prints(String data, char separator = ','){
-            COMMS_SERIAL.print(data);
-            COMMS_SERIAL.print(separator);
+            if (COMMS_SERIAL){
+                COMMS_SERIAL.print(data);
+                COMMS_SERIAL.print(separator);
+            }
             printBuffer += data.c_str() + separator;
+            transmissionSize += sizeof(data) + sizeof(separator);
         }
 
     public:
@@ -176,7 +187,7 @@ class Telemetry{
         }
 
         void telemetry_send(){
-            bitSize = 0;
+            transmissionSize = 0;
             printBuffer = "";
             
             this->prints(ID);
@@ -220,28 +231,29 @@ class Telemetry{
             // GUVA-S12SD
             this->prints(guva.readIntensity());
 
+            // TRANSMISSION SIZE in Bytes (without checksum)
+            this->prints(transmissionSize);
+            // SLEEP AMOUNT
+            this->prints(sleepAmount);
+
             // CHECKSUM
             COMMS_SERIAL.print('*');
             String checksum = this->get_checksum(printBuffer);
             COMMS_SERIAL.println(checksum);
-            bitSize += sizeof('*') + sizeof(checksum);
-            bitSize *= 8;
+            transmissionSize += sizeof('*') + sizeof(checksum);
+            transmissionSize *= 8;
         }
 
         void begin(){
             COMMS_SERIAL.begin(commsBaudRate);
-            while (!COMMS_SERIAL){
-            }
-            COMMS_SERIAL.println("Setup: INIT");
             sleepAmount = 1000;
             packetCount = 0;
             timer.reset();
             this->start_broadcast();
-            this->send("Telemetry INIT: OK");
         }
 
         void set_sleep_amount(uint32_t elapsedTime){
-            uint32_t transmissionTime = (bitSize / commsBaudRate) * 1000;
+            uint32_t transmissionTime = (transmissionSize / commsBaudRate) * 1000;
             elapsedTime -= transmissionTime;
             sleepAmount = (1-percentActive)*10 * transmissionTime - elapsedTime;
         }
@@ -281,7 +293,6 @@ void setup(){
     data.begin();
     led.begin();
     led.flash();
-    COMMS_SERIAL.println("Setup: OK");
 }
 
 void loop(){
