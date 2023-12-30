@@ -9,10 +9,10 @@ void setup(){
         COMMS_SERIAL.println("Failed RF gateway");
         delay(500);
     }
-    LoRa.setSyncWord(12);
+    LoRa.setSyncWord(12); // set HTerm sync to the same!!
 }
 
-int counter;
+int counter = 0;
 void loop(){
     LoRa.beginPacket();
     LoRa.print("Hello! ");
