@@ -22,7 +22,35 @@
 
 
 // GLOBALS
+class mySD{
+    private:
+        const int chipSelect = 14;
+        File flightLog;
+        const char* logName = "flightLog.txt";
 
+    public:
+        int get_chipSelect(){
+            return chipSelect;
+        }
+
+        void begin(){
+            if (SD.begin(chipSelect)){
+                flightLog = SD.open(logName);
+                flightLog.close();
+            }
+        }
+
+        void write(std::string data){
+            if (SD.begin(chipSelect)){
+                flightLog = SD.open(logName);
+                if (flightLog){
+                    flightLog.println(data.c_str());
+                }
+                flightLog.close();
+            }
+        }
+
+};
 
 class LightSensor {
     private:
@@ -124,6 +152,8 @@ class Telemetry{
         Adafruit_MPU6050 mpu;
         LightSensor guva = LightSensor(14,3.3);
 
+        mySD sd;
+
         std::string printBuffer = "";
         uint32_t transmissionSize;
 
@@ -188,6 +218,7 @@ class Telemetry{
             if (broadcasting && (elapsedTime>=sleepAmount)){
                 broadcastStartTime = millis();
                 this->telemetry_send();
+                sd.write(printBuffer);
                 set_sleep_amount(elapsedTime);
                 led.flash();
             }
@@ -274,20 +305,6 @@ class Telemetry{
 
         void send(const String& message){
             COMMS_SERIAL.println(message);            
-        }
-
-        void write(std::string data, int valueCount){
-            
-        }
-
-        
-        void sd_validate(){        
-            //if (!SD.begin(chipSelect)){
-            //    // TODO: indicate that no SD card
-            //    while (1){
-            //        // stop here
-            //    }
-            //}
         }
 };
 
