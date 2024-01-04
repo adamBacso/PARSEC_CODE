@@ -108,6 +108,7 @@ class MissionTime{
         }
 };
 
+int err_neutral = 0000;
 class Radio{
     private:
         int frequency = 868000000;
@@ -122,61 +123,13 @@ class Radio{
             return COMMS_SERIAL;
         }
 
-        // system commands
-        int standby(int duration){
+        int send_request(String command){
             if (this->is_available()){
-                COMMS_SERIAL.println("sys sleep standby " + duration);
+                COMMS_SERIAL.println(command);
+                return err_neutral;
             }else{
                 return err_serviceUnavailable;
             }
-        }
-
-        int backup(int duration){
-            if (this->is_available()){
-                COMMS_SERIAL.println("sys sleep backup " + duration);
-            }else{
-                return err_serviceUnavailable;
-            }
-        }
-
-        int factoryReset(){
-            if (this->is_available()){
-                COMMS_SERIAL.println("sys factoryRESET");
-            }else{
-                return err_serviceUnavailable;
-            }
-        }
-
-        int radioRX(int windowSize){
-            if (this->is_available()){
-                if (0<=windowSize && windowSize<=65535){
-                    COMMS_SERIAL.println("radio rx " + windowSize);
-                }else{
-                    return err_invalidRange;
-                }
-            }else{
-                return err_serviceUnavailable;
-            }
-        }
-
-        int rxstop(){
-            if (this->is_available()){
-                COMMS_SERIAL.println("radio rxstop");
-            }else{
-                return err_serviceUnavailable;
-            }
-        }
-
-        int get_frequency(){
-            return frequency;
-        }
-        
-        int get_sync_word(){
-            return syncWord;
-        }
-
-        int get_bandwidth(){
-            return bandwidth;
         }
 };
 
@@ -386,18 +339,20 @@ class CMD{
             radio set reg <regAddr> <regValue> // change regAddr to regValue
             *radio get _forEachProperty
     */
-    void system_reset(){
-        data.begin();
-    }
+    public:
+        void system_reset(){
+            data.begin();
+            led.begin();
+            led.flash();
+        }
 
     
 };
 
+CMD cmd;
 void setup(){
     // TODO: add component validation
-    data.begin();
-    led.begin();
-    led.flash();
+    cmd.system_reset();
 }
 
 void loop(){
