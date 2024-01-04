@@ -1,4 +1,3 @@
-#include <LoRa.h>
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
@@ -13,8 +12,8 @@
 #include <string>
 
 // SERIAL COMMS  
-// COMMS - **Serial1** through pin(1,0) [TX,RX]      // USB SERIAL - **Serial** through USB port
-#define COMMS_SERIAL    Serial  // FIXME: change to Serial1 on final version
+// LORA RADIO - Serial1      // USB SERIAL - **Serial** through USB port
+#define COMMS_SERIAL    Serial
 // GPS - serial through pin(8,7) [TX,RX]
 #define GPS_SERIAL      Serial2
 
@@ -45,6 +44,11 @@ class LightSensor {
         }
 };
 
+// **COMPONENTS**
+Adafruit_BME280 bme;
+Adafruit_MPU6050 mpu;
+LightSensor guva = LightSensor(14,3.3);
+
 class Led {
     public:
         void begin(){
@@ -60,6 +64,7 @@ class Led {
 };
 Led led;
 
+
 class MissionTime{
     private:
         unsigned long missionStartTime;
@@ -67,10 +72,10 @@ class MissionTime{
         unsigned long processStart;
     public:
         MissionTime(){
-            this->reset();
+            this->begin();
         }
 
-        void reset(){
+        void begin(){
             missionStartTime = millis();
             processStart = 0;
         }
@@ -103,26 +108,92 @@ class MissionTime{
         }
 };
 
-MissionTime timer;
+class Radio{
+    private:
+        int frequency = 868000000;
+        int syncWord;
+        int bandwidth;
+
+        // error codes
+        int err_serviceUnavailable = 506;
+        int err_invalidRange = 416;
+    public:
+        bool is_available(){
+            return COMMS_SERIAL;
+        }
+
+        // system commands
+        int standby(int duration){
+            if (this->is_available()){
+                COMMS_SERIAL.println("sys sleep standby " + duration);
+            }else{
+                return err_serviceUnavailable;
+            }
+        }
+
+        int backup(int duration){
+            if (this->is_available()){
+                COMMS_SERIAL.println("sys sleep backup " + duration);
+            }else{
+                return err_serviceUnavailable;
+            }
+        }
+
+        int factoryReset(){
+            if (this->is_available()){
+                COMMS_SERIAL.println("sys factoryRESET");
+            }else{
+                return err_serviceUnavailable;
+            }
+        }
+
+        int radioRX(int windowSize){
+            if (this->is_available()){
+                if (0<=windowSize && windowSize<=65535){
+                    COMMS_SERIAL.println("radio rx " + windowSize);
+                }else{
+                    return err_invalidRange;
+                }
+            }else{
+                return err_serviceUnavailable;
+            }
+        }
+
+        int rxstop(){
+            if (this->is_available()){
+                COMMS_SERIAL.println("radio rxstop");
+            }else{
+                return err_serviceUnavailable;
+            }
+        }
+
+        int get_frequency(){
+            return frequency;
+        }
+        
+        int get_sync_word(){
+            return syncWord;
+        }
+
+        int get_bandwidth(){
+            return bandwidth;
+        }
+};
+
 class Telemetry{
     /*ID,MISSION_TIME,PACKET_COUNT,TEMPERATURE,BAROMETRIC_ALTITUDE,HUMIDITY,GPS_TIME,GPS_ALTITUDE,GPS_LONGITUDE,GPS_LATITUDE,TILT_X,TILT_Y,TILTZ,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,O3_CONCENTRATION,VOLTAGE,CHECKSUM*/
     private:
+        Radio lora;
+        MissionTime timer;
         bool broadcasting = false;
         uint32_t broadcastStartTime = 0;
 
-        int ID = 12;
+        String ID = "$";
         int packetCount = 0;
 
-        int frequency = 866E6;
         int commsBaudRate = 9600;
         float percentActive = 0.1;
         uint32_t sleepAmount;
-
-        // **COMPONENTS**
-        static const int COMPONENT_COUNT = 4;
-        Adafruit_BME280 bme;
-        Adafruit_MPU6050 mpu;
-        LightSensor guva = LightSensor(14,3.3);
 
         std::string printBuffer = "";
         uint32_t transmissionSize;
@@ -130,7 +201,7 @@ class Telemetry{
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
         void prints(float data, char separator = ','){
-            if (COMMS_SERIAL){
+            if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
@@ -139,16 +210,16 @@ class Telemetry{
         }
 
         void prints(int data, char separator = ','){
-            if (COMMS_SERIAL){
+            if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
             printBuffer += std::to_string(data);
             transmissionSize += sizeof(data) + sizeof(separator);
         }
-
+        
         void prints(uint32_t data, char separator = ','){
-            if (COMMS_SERIAL){
+            if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
@@ -157,7 +228,7 @@ class Telemetry{
         }
 
         void prints(char data, char separator = ','){
-            if (COMMS_SERIAL){
+            if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
@@ -166,7 +237,7 @@ class Telemetry{
         }
 
         void prints(String data, char separator = ','){
-            if (COMMS_SERIAL){
+            if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
@@ -238,9 +309,8 @@ class Telemetry{
             // GUVA-S12SD
             this->prints(guva.readIntensity());
 
-            // TRANSMISSION SIZE in Bytes (without checksum)
+            // in Bytes (without checksum)
             this->prints(transmissionSize);
-            // SLEEP AMOUNT
             this->prints(sleepAmount);
 
             // CHECKSUM
@@ -252,10 +322,14 @@ class Telemetry{
         }
 
         void begin(){
-            COMMS_SERIAL.begin(commsBaudRate);
+            if (is_lora()){
+                // FIXME: do lora setup
+            }else{
+                COMMS_SERIAL.begin(commsBaudRate);
+            }
             sleepAmount = 1000;
             packetCount = 0;
-            timer.reset();
+            timer.begin();
             this->start_broadcast();
         }
 
@@ -276,24 +350,48 @@ class Telemetry{
             COMMS_SERIAL.println(message);            
         }
 
-        void write(std::string data, int valueCount){
-            
+        bool is_lora(){
+            return false;
         }
 
-        
-        void sd_validate(){        
-            //if (!SD.begin(chipSelect)){
-            //    // TODO: indicate that no SD card
-            //    while (1){
-            //        // stop here
-            //    }
-            //}
+        // .availableForWrite() is shared between Serial and LoRaClass
+        bool is_comms_available(){
+            return COMMS_SERIAL;
         }
 };
 
-
-
 Telemetry data;
+
+class CMD{
+    /* required commands
+        SYSTEM
+            begin
+            set clock speed // __depricated__: vould also 
+        RF
+            sys sleep
+            sys reset
+            radio rx <rxWindowSize>
+            radio rxstop
+            radio tx <data> <count> // data must be in hex
+            radio set bt // GFSK moudlation (none, 1.0, 0.5, 0.3)
+            radio set mod <mode> // modulation method (lora, fsk)
+            radio set freq <frequency> // 137M-175M; 410M-525M; 862M-1020M
+            radio set pwr <pwrout> // paboostOn(2-20); paboostOff(-2-15)
+            radio set pa <state> // paboost (on, off)
+            radio set sf <spreadingFactor> // (sf7, sf8, sf9, sf10, sf11, sf12)
+            radio set afcvw <autoFreqBAnd> // ( 250, 125, 62.5, 31.3, 15.6, 7.8, 3.9, 200, 100, 50, 25, 12.5, 6.3, 3.1, 166.7, 83.3, 41.7, 20.8, 10.4, 5.2, 2.6)
+            radio set rxwb <rxbandwidth> // ( 250, 125, 62.5, 31.3, 15.6, 7.8, 3.9, 200, 100, 50, 25, 12.5, 6.3, 3.1, 166.7, 83.3, 41.7, 20.8, 10.4, 5.2, 2.6)
+            radio set sync <syncWord> // hex value (1 Byte for lora)
+            radio set bw <bandwidth> // (125, 250, 500)
+            radio set reg <regAddr> <regValue> // change regAddr to regValue
+            *radio get _forEachProperty
+    */
+    void system_reset(){
+        data.begin();
+    }
+
+    
+};
 
 void setup(){
     // TODO: add component validation
