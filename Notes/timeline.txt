@@ -27,6 +27,6 @@ servo ---> not implemented
 __Implementation priority__
 1. gps - pre 01.20
 2. radio comms
-3. servo
-4. flight control
-5. GND interface
+3. GND interface
+4. servo
+5. flight control
