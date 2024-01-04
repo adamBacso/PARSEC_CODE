@@ -1,0 +1,32 @@
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Software Review
+2024.01.04          Bacsó Ádám
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+__legend__
+not implemented - work has not yet started
+implementation started - work has started
+implemented - work is finished, testing required
+done - implementation finished
+
+Telemetry ---> done
+Data management ---> implemented
+Inter-cansat RF communication ---> implementation started
+Command management ---> implementation started
+Flight control ---> not implemented
+GND interface ---> not implemented
+
+__COMPONENTS__ 
+bme280 ---> done
+mpu6050 ---> done
+guva s12sd ---> done
+sd card ---> implemented
+gps ---> not implemented
+radio ---> implemented
+servo ---> not implemented
+
+__Implementation priority__
+1. gps - pre 01.20
+2. servo
+3. flight control
+4. radio comms
+5. GND interface
