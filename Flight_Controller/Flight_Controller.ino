@@ -6,6 +6,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <Adafruit_MPU6050.h>
+#include <TinyGPSPlus.h>
 
 #include <core_pins.h>
 #include <usb_serial.h>
@@ -42,6 +43,26 @@ class LightSensor {
 
         void calibrate(){
             calibrationValue = this->readIntensity();
+        }
+};
+
+class MyGPS : public TinyGPSPlus {
+    private:
+        int gpsBaud;
+    public:
+        void begin(){
+            this->set_baud(9600);
+            GPS_SERIAL.begin(gpsBaud);
+        }
+
+        void set_baud(int baud){
+            gpsBaud = baud;
+        }
+
+        void feed_gps(){
+            while(GPS_SERIAL.available()){
+                this->encode(GPS_SERIAL.read());
+            }
         }
 };
 
@@ -122,6 +143,7 @@ class Telemetry{
         static const int COMPONENT_COUNT = 4;
         Adafruit_BME280 bme;
         Adafruit_MPU6050 mpu;
+        MyGPS gps;
         LightSensor guva = LightSensor(14,3.3);
 
         std::string printBuffer = "";
