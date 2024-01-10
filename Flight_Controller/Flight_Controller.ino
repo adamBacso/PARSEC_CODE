@@ -26,7 +26,7 @@ class mySD{
     private:
         const int chipSelect = 14;
         File flightLog;
-        const char* logName = "flightLog.txt";
+        const char* logName = "flightLog.csv";
 
     public:
         int get_chipSelect(){
@@ -151,6 +151,8 @@ class Telemetry{
         Adafruit_BME280 bme;
         Adafruit_MPU6050 mpu;
         LightSensor guva = LightSensor(14,3.3);
+
+        std::string header = "ID,PACKET_COUNT,MISSION_TIME,BAROMETRIC_ALTITUDE,TEMPERATURE,HUMIDITY,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,GYRO_X,GYRO_Y,GYRO_Z,MPU_TEMPERATURE,LIGHT_INTENSITY,INTERNAL_TEMPERATURE,TRANSMISSION_SIZE,SLEEP_AMOUNT,CHECKSUM";
 
         mySD sd;
 
@@ -287,6 +289,7 @@ class Telemetry{
             sleepAmount = 1000;
             packetCount = 0;
             timer.reset();
+            sd.write(header);
             this->start_broadcast();
         }
 
