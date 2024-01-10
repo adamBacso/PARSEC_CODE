@@ -1,4 +1,3 @@
-#include <LoRa.h>
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
@@ -36,13 +35,13 @@ class LightSensor {
     public:
         LightSensor(int pin, float voltage) : analogPin(pin), operatingVoltage(voltage){}
 
-        float readIntensity(){
+        float ReadIntensity(){
             float sensorValue = analogRead(analogPin);
             return (sensorValue/resolution*operatingVoltage)-calibrationValue;
         }
 
-        void calibrate(){
-            calibrationValue = this->readIntensity();
+        void Calibrate(){
+            calibrationValue = this->ReadIntensity();
         }
 };
 
@@ -51,20 +50,21 @@ class MyGPS : public TinyGPSPlus {
         int gpsBaud;
     public:
         void begin(){
-            this->set_baud(9600);
+            this->SetBaud(9600);
             GPS_SERIAL.begin(gpsBaud);
         }
 
-        void set_baud(int baud){
+        void SetBaud(int baud){
             gpsBaud = baud;
         }
 
-        void feed_gps(){
+        void FeedGPS(){
             while(GPS_SERIAL.available()){
                 this->encode(GPS_SERIAL.read());
             }
         }
 };
+MyGPS gps;
 
 class Led {
     public:
@@ -73,7 +73,7 @@ class Led {
             digitalWrite(LED_BUILTIN,LOW);
         }
 
-        void flash(){
+        void Flash(){
             digitalWrite(LED_BUILTIN,HIGH);
             delay(25);
             digitalWrite(LED_BUILTIN,LOW);
@@ -88,15 +88,15 @@ class MissionTime{
         unsigned long processStart;
     public:
         MissionTime(){
-            this->reset();
+            this->Reset();
         }
 
-        void reset(){
+        void Reset(){
             missionStartTime = millis();
             processStart = 0;
         }
         
-        String get_timestamp(){
+        String GetTimestamp(){
             unsigned int seconds, minutes, hours;
             uint32_t elapsedTime = (millis()-missionStartTime)/1000; // in seconds
 
@@ -113,12 +113,12 @@ class MissionTime{
         }
         
 
-        float get_time(){
+        float GetTime(){
             uint32_t elapsedTime = (millis()-missionStartTime) / 100; // in deciseconds xD
             return float(elapsedTime)/10; // should return seconds to one decimal precision
         }
 
-        void true_sleep(int milli){
+        void TrueSleep(int milli){
             delay(milli - (millis()-processStart));
             processStart = millis();
         }
@@ -143,7 +143,6 @@ class Telemetry{
         static const int COMPONENT_COUNT = 4;
         Adafruit_BME280 bme;
         Adafruit_MPU6050 mpu;
-        MyGPS gps;
         LightSensor guva = LightSensor(14,3.3);
 
         std::string printBuffer = "";
@@ -156,7 +155,7 @@ class Telemetry{
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
-            printBuffer += std::to_string(data);
+            printBuffer += std::to_string(data) + separator;
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
@@ -165,7 +164,7 @@ class Telemetry{
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
-            printBuffer += std::to_string(data);
+            printBuffer += std::to_string(data) + separator;
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
@@ -174,7 +173,7 @@ class Telemetry{
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
-            printBuffer += std::to_string(data);
+            printBuffer += std::to_string(data) + separator;
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
@@ -201,30 +200,45 @@ class Telemetry{
             this->begin();
         }
 
-        void start_broadcast(){
+        void StartBroadcast(){
             broadcasting = true;
         }
 
-        void broadcast(){
+        void Broadcast(){
             uint32_t elapsedTime = millis()-broadcastStartTime;
             if (broadcasting && (elapsedTime>=sleepAmount)){
                 broadcastStartTime = millis();
-                this->telemetry_send();
-                set_sleep_amount(elapsedTime);
-                led.flash();
+                this->SendTelemetry();
+                SetSleepAmount(elapsedTime);
+                led.Flash();
             }
+            gps.FeedGPS();
         }
 
-        void telemetry_send(){
+        void SendTelemetry(){
             transmissionSize = 0;
             printBuffer = "";
             
             this->prints(ID);
             this->prints(packetCount++);
-            this->prints(timer.get_time());
+            this->prints(timer.GetTime());
 
-            // SYSTEM
-            this->prints(tempmonGetTemp()); // internal temperature
+            // GPS - WLR089u0
+            if (gps.location.isValid()){
+                //this->prints(gps.location.age()); // TODO: decide if age is needed or not
+                this->prints(float(gps.location.lat()));
+                this->prints(float(gps.location.lng()));
+            }else{
+                for (int i = 0; i<3; i++){
+                    this->prints(0);
+                }
+            }
+
+            if (gps.altitude.isValid()){
+                this->prints(float(gps.altitude.meters()));
+            }else{
+                this->prints(0);
+            }
 
             // BME280
             if (bme.begin(0x76)){
@@ -258,8 +272,10 @@ class Telemetry{
             }
 
             // GUVA-S12SD
-            this->prints(guva.readIntensity());
+            this->prints(guva.ReadIntensity());
 
+            // SYSTEM
+            this->prints(tempmonGetTemp()); // internal temperature
             // TRANSMISSION SIZE in Bytes (without checksum)
             this->prints(transmissionSize);
             // SLEEP AMOUNT
@@ -267,7 +283,7 @@ class Telemetry{
 
             // CHECKSUM
             COMMS_SERIAL.print('*');
-            String checksum = this->get_checksum(printBuffer);
+            String checksum = this->GetChecksum(printBuffer);
             COMMS_SERIAL.println(checksum);
             transmissionSize += sizeof('*') + sizeof(checksum);
             transmissionSize *= 8;
@@ -277,17 +293,17 @@ class Telemetry{
             COMMS_SERIAL.begin(commsBaudRate);
             sleepAmount = 1000;
             packetCount = 0;
-            timer.reset();
-            this->start_broadcast();
+            timer.Reset();
+            this->StartBroadcast();
         }
 
-        void set_sleep_amount(uint32_t elapsedTime){
+        void SetSleepAmount(uint32_t elapsedTime){
             uint32_t transmissionTime = (transmissionSize / commsBaudRate) * 1000;
             elapsedTime -= transmissionTime;
             sleepAmount = (1-percentActive)*10 * transmissionTime - elapsedTime;
         }
 
-        String get_checksum(std::string data){
+        String GetChecksum(std::string data){
             unsigned int checksum = CRC32::calculate(data.c_str(), data.length());
             char checksumStr[3];
             snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
@@ -296,20 +312,6 @@ class Telemetry{
 
         void send(const String& message){
             COMMS_SERIAL.println(message);            
-        }
-
-        void write(std::string data, int valueCount){
-            
-        }
-
-        
-        void sd_validate(){        
-            //if (!SD.begin(chipSelect)){
-            //    // TODO: indicate that no SD card
-            //    while (1){
-            //        // stop here
-            //    }
-            //}
         }
 };
 
@@ -321,9 +323,9 @@ void setup(){
     // TODO: add component validation
     data.begin();
     led.begin();
-    led.flash();
+    led.Flash();
 }
 
 void loop(){
-    data.broadcast();
+    data.Broadcast();
 }
