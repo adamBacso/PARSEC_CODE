@@ -13,7 +13,7 @@
 
 // SERIAL COMMS  
 // LORA RADIO - Serial1      // USB SERIAL - **Serial** through USB port
-#define COMMS_SERIAL    Serial
+#define COMMS_SERIAL    Serial1
 // GPS - serial through pin(8,7) [TX,RX]
 #define GPS_SERIAL      Serial2
 
@@ -144,7 +144,7 @@ class Telemetry{
         String ID = "$";
         int packetCount = 0;
 
-        int commsBaudRate = 9600;
+        int commsBaudRate = 115200;
         float percentActive = 0.1;
         uint32_t sleepAmount;
 
