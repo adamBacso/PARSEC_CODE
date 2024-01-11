@@ -4,18 +4,17 @@
 void blink_thread(){
     while (1){
         digitalWrite(LED_BUILTIN,HIGH);
-        threads.delay(25);
+        threads.delay(500);
         digitalWrite(LED_BUILTIN,LOW);
-        threads.delay(975);
+        threads.delay(500);
         threads.yield();
     }
 }
 
 void heartbeat(){
-    int count = 0;
     while (1){
-        Serial.println(count + "HELLO");
-        threads.delay(500);
+        Serial.println(millis() + " - HELLO");
+        threads.delay(750);
         threads.yield();
     }
 }
