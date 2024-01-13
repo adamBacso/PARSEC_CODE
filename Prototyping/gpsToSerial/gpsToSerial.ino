@@ -18,7 +18,7 @@ void loop(){
     unsigned long start = millis();
     do 
     {
-    while (Serial2.available())
+    while (Serial2.available()>0)
         gps.encode(Serial2.read());
     } while (millis() - start < 1000); // 1 second delay
 }
