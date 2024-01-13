@@ -10,15 +10,20 @@ void setup(){
 }
 
 void loop(){
-    Serial.print("lat:");
-    Serial.print(gps.location.lat());
-    Serial.print(";\t\tlng: ");
-    Serial.println(gps.location.lng());
 
     unsigned long start = millis();
     do 
     {
     while (Serial2.available()>0)
-        gps.encode(Serial2.read());
+        if(gps.encode(Serial2.read())){
+            displayInfo();
+        };
     } while (millis() - start < 1000); // 1 second delay
+}
+
+void displayInfo(){
+    Serial.print("lat:");
+    Serial.print(gps.location.lat());
+    Serial.print(";\t\tlng: ");
+    Serial.println(gps.location.lng());
 }
