@@ -6,7 +6,7 @@ void setup(){
 }
 
 void loop(){
-    if (Serial2.available()){
+    if (Serial2.available()>0){
         Serial.print(Serial2.read());
     }
 }
