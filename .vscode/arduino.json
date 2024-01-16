@@ -1,6 +1,6 @@
 {
     "configuration": "usb=serial,speed=600,opt=o2std,keys=en-us",
     "board": "teensy:avr:teensy40",
-    "sketch": "Prototyping\\gpsToSerial\\gpsToSerial.ino",
+    "sketch": "Flight_Controller\\Flight_Controller.ino",
     "port": "COM6"
 }
