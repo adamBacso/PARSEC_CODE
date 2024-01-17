@@ -1,10 +1,17 @@
+#include <usb_serial.h>
+
+bool ledState = true;
 void setup(){
-    digitalWrite(LED_BUILTIN,HIGH);
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN,ledState);
     Serial.begin(9600);
     while (!Serial){}
 }
 
+int counter = 0;
 void loop(){
-    Serial.println("OK");
+    Serial.println(counter++);
     delay(500);
+    ledState = !ledState;
+    digitalWrite(LED_BUILTIN,ledState);
 }
