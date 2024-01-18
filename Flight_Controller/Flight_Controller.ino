@@ -17,12 +17,6 @@
 // GPS - serial through pin(8,7) [TX,RX]
 #define GPS_SERIAL      Serial2
 
-
-
-
-// GLOBALS
-
-
 class LightSensor {
     private:
         int analogPin;
@@ -108,7 +102,6 @@ class MissionTime{
         }
 };
 
-int err_neutral = 0000;
 class Radio{
     private:
         int frequency = 868000000;
@@ -123,26 +116,26 @@ class Radio{
             return COMMS_SERIAL;
         }
 
-        int send_request(String command){
-            if (this->is_available()){
-                COMMS_SERIAL.println(command);
-                return err_neutral;
-            }else{
-                return err_serviceUnavailable;
-            }
+        void send_request(String command){
+            COMMS_SERIAL.println(command);
         }
+
+        void receive(int milli){
+            COMMS_SERIAL.println("radio rx " + milli);
+        }
+
+        
 };
 
 class Telemetry{
-    /*ID,MISSION_TIME,PACKET_COUNT,TEMPERATURE,BAROMETRIC_ALTITUDE,HUMIDITY,GPS_TIME,GPS_ALTITUDE,GPS_LONGITUDE,GPS_LATITUDE,TILT_X,TILT_Y,TILTZ,ACCELERATION_X,ACCELERATION_Y,ACCELERATION_Z,O3_CONCENTRATION,VOLTAGE,CHECKSUM*/
     private:
         Radio lora;
         MissionTime timer;
         bool broadcasting = false;
         uint32_t broadcastStartTime = 0;
 
-        String ID = "$";
         int packetCount = 0;
+        char separator = 'a';
 
         int commsBaudRate = 115200;
         float percentActive = 0.1;
@@ -153,7 +146,7 @@ class Telemetry{
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
-        void prints(float data, char separator = ','){
+        void prints(float data){
             if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
@@ -162,7 +155,7 @@ class Telemetry{
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
-        void prints(int data, char separator = ','){
+        void prints(int data){
             if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
@@ -171,7 +164,7 @@ class Telemetry{
             transmissionSize += sizeof(data) + sizeof(separator);
         }
         
-        void prints(uint32_t data, char separator = ','){
+        void prints(uint32_t data){
             if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
@@ -180,7 +173,7 @@ class Telemetry{
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
-        void prints(char data, char separator = ','){
+        void prints(char data){
             if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
@@ -189,7 +182,7 @@ class Telemetry{
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
-        void prints(String data, char separator = ','){
+        void prints(String data){
             if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
@@ -211,7 +204,9 @@ class Telemetry{
             uint32_t elapsedTime = millis()-broadcastStartTime;
             if (broadcasting && (elapsedTime>=sleepAmount)){
                 broadcastStartTime = millis();
+                COMMS_SERIAL.print("radio tx ");
                 this->telemetry_send();
+                COMMS_SERIAL.println(" 1"); // FIXME: may need to print \\r\\n instead
                 set_sleep_amount(elapsedTime);
                 led.flash();
             }
@@ -220,19 +215,18 @@ class Telemetry{
         void telemetry_send(){
             transmissionSize = 0;
             printBuffer = "";
-            
-            this->prints(ID);
-            this->prints(packetCount++);
-            this->prints(timer.get_time());
+
+            this->prints(packetCount++);                                        // packet count
+            this->prints(timer.get_time());                                     // current mission time
 
             // SYSTEM
-            this->prints(tempmonGetTemp()); // internal temperature
+            this->prints(tempmonGetTemp());                                     // internal temperature
 
             // BME280
             if (bme.begin(0x76)){
-                this->prints(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));
-                this->prints(bme.readTemperature());
-                this->prints(bme.readHumidity());
+                this->prints(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));         // altitude
+                this->prints(bme.readTemperature());                            // temperature
+                this->prints(bme.readHumidity());                               // humidity
             }else{
                 for (int i = 0; i<3; i++){
                     this->prints(0);
@@ -244,15 +238,15 @@ class Telemetry{
                 sensors_event_t a, g, temp;
                 mpu.getEvent(&a, &g, &temp);
                 // acceleration
-                this->prints(a.acceleration.x);
-                this->prints(a.acceleration.y);
-                this->prints(a.acceleration.z);
+                this->prints(a.acceleration.x);                                 // acceleration x
+                this->prints(a.acceleration.y);                                 // acceleration y
+                this->prints(a.acceleration.z);                                 // acceleration z
                 // gyroscope
-                this->prints(g.gyro.x);
-                this->prints(g.gyro.y);
-                this->prints(g.gyro.z);
+                this->prints(g.gyro.x);                                         // gyro x
+                this->prints(g.gyro.y);                                         // gyro y
+                this->prints(g.gyro.z);                                         // gyro z
                 // temperature
-                this->prints(temp.temperature);
+                this->prints(temp.temperature);                                 // mpu ext. temperature
             }else{
                 for (int i = 0; i<7; i++){
                     this->prints(0);
@@ -260,26 +254,23 @@ class Telemetry{
             }
 
             // GUVA-S12SD
-            this->prints(guva.readIntensity());
+            this->prints(guva.readIntensity());                                 // light intensity
 
-            // in Bytes (without checksum)
-            this->prints(transmissionSize);
-            this->prints(sleepAmount);
+            this->prints(transmissionSize);                                     // tx size (w/o checksum)
+            this->prints(sleepAmount);                                          // sleep time
 
             // CHECKSUM
             COMMS_SERIAL.print('*');
-            String checksum = this->get_checksum(printBuffer);
+            String checksum = this->get_checksum(printBuffer);                  // checksum
             COMMS_SERIAL.println(checksum);
             transmissionSize += sizeof('*') + sizeof(checksum);
             transmissionSize *= 8;
         }
 
         void begin(){
-            if (is_lora()){
-                // FIXME: do lora setup
-            }else{
-                COMMS_SERIAL.begin(commsBaudRate);
-            }
+            COMMS_SERIAL.begin(commsBaudRate);
+            while (!COMMS_SERIAL);
+            
             sleepAmount = 1000;
             packetCount = 0;
             timer.begin();
@@ -315,44 +306,11 @@ class Telemetry{
 
 Telemetry data;
 
-class CMD{
-    /* required commands
-        SYSTEM
-            begin
-            set clock speed // __depricated__: vould also 
-        RF
-            sys sleep
-            sys reset
-            radio rx <rxWindowSize>
-            radio rxstop
-            radio tx <data> <count> // data must be in hex
-            radio set bt // GFSK moudlation (none, 1.0, 0.5, 0.3)
-            radio set mod <mode> // modulation method (lora, fsk)
-            radio set freq <frequency> // 137M-175M; 410M-525M; 862M-1020M
-            radio set pwr <pwrout> // paboostOn(2-20); paboostOff(-2-15)
-            radio set pa <state> // paboost (on, off)
-            radio set sf <spreadingFactor> // (sf7, sf8, sf9, sf10, sf11, sf12)
-            radio set afcvw <autoFreqBAnd> // ( 250, 125, 62.5, 31.3, 15.6, 7.8, 3.9, 200, 100, 50, 25, 12.5, 6.3, 3.1, 166.7, 83.3, 41.7, 20.8, 10.4, 5.2, 2.6)
-            radio set rxwb <rxbandwidth> // ( 250, 125, 62.5, 31.3, 15.6, 7.8, 3.9, 200, 100, 50, 25, 12.5, 6.3, 3.1, 166.7, 83.3, 41.7, 20.8, 10.4, 5.2, 2.6)
-            radio set sync <syncWord> // hex value (1 Byte for lora)
-            radio set bw <bandwidth> // (125, 250, 500)
-            radio set reg <regAddr> <regValue> // change regAddr to regValue
-            *radio get _forEachProperty
-    */
-    public:
-        void system_reset(){
-            data.begin();
-            led.begin();
-            led.flash();
-        }
-
-    
-};
-
-CMD cmd;
 void setup(){
     // TODO: add component validation
-    cmd.system_reset();
+    data.begin();
+    led.begin();
+    led.flash();
 }
 
 void loop(){
