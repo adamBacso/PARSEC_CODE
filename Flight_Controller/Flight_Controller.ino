@@ -225,7 +225,7 @@ class Telemetry{
 
             // GPS - WLR089u0
             if (gps.location.isValid()){
-                //this->prints(gps.location.age()); // TODO: decide if age is needed or not
+                this->prints(gps.location.age()); // TODO: decide if age is needed or not
                 this->prints(float(gps.location.lat()));
                 this->prints(float(gps.location.lng()));
             }else{
