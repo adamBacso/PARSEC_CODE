@@ -8,6 +8,8 @@ void setup(){
 
 int counter = 0;
 void loop(){
-    COMMS_SERIAL.print("Hello! ");
-    COMMS_SERIAL.println(counter++);
+    COMMS_SERIAL.print("sys get ver\r\n");
+    Serial.println(COMMS_SERIAL.read());
+    
+    delay(500);
 }

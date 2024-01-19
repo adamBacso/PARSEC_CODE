@@ -136,9 +136,10 @@ class Telemetry{
 
         int packetCount = 0;
         char separator = 'a';
+        char checksumIdentifier = 'c';
 
         int commsBaudRate = 115200;
-        float percentActive = 0.1;
+        float percentActive = 0.1; // decimal notation
         uint32_t sleepAmount;
 
         std::string printBuffer = "";
@@ -213,6 +214,7 @@ class Telemetry{
         }
 
         void telemetry_send(){
+            while (!(COMMS_SERIAL.availableForWrite()>0)); // FIXME: high risk loop 
             transmissionSize = 0;
             printBuffer = "";
 
@@ -260,16 +262,18 @@ class Telemetry{
             this->prints(sleepAmount);                                          // sleep time
 
             // CHECKSUM
-            COMMS_SERIAL.print('*');
+            COMMS_SERIAL.print(checksumIdentifier);
             String checksum = this->get_checksum(printBuffer);                  // checksum
             COMMS_SERIAL.println(checksum);
-            transmissionSize += sizeof('*') + sizeof(checksum);
+            Serial.println(timer.get_timestamp());
+            transmissionSize += sizeof(checksumIdentifier) + sizeof(checksum);
             transmissionSize *= 8;
         }
 
         void begin(){
             COMMS_SERIAL.begin(commsBaudRate);
             while (!COMMS_SERIAL);
+            COMMS_SERIAL.println("radio tx abc123 1");
             
             sleepAmount = 1000;
             packetCount = 0;
