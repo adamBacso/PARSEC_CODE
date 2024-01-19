@@ -1,6 +1,8 @@
 #define COMMS_SERIAL Serial1 
 
 #include <HardwareSerial.h>
+#include <SPI.h>
+
 
 void setup(){
     COMMS_SERIAL.begin(115200);
