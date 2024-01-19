@@ -16,6 +16,7 @@ void loop(){
     // Check if data is available on USB Serial
   while (Serial.available()) {
     String data = Serial.readString();
+    Serial.println(data);
     COMMS_SERIAL.println(data); // Send data to Software Serial
 
     //Serial.flush() //is very slow
