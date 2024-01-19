@@ -1,4 +1,6 @@
-#define COMMS_SERIAL Serial1 //TX: 1; RX: 0
+#define COMMS_SERIAL Serial1 
+
+#include <HardwareSerial.h>
 
 void setup(){
     COMMS_SERIAL.begin(115200);
