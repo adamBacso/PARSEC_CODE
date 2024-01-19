@@ -13,11 +13,19 @@ void setup(){
 
 int counter = 0;
 void loop(){
-    if (COMMS_SERIAL.available()>0){
-        Serial.println(COMMS_SERIAL.read(),DEC);
-    }
-    else{
-        COMMS_SERIAL.println("sys get ver\r\n");
-        delay(500);
-    }
+    // Check if data is available on USB Serial
+  while (Serial.available()) {
+    String data = Serial.readString();
+    COMMS_SERIAL.println(data); // Send data to Software Serial
+
+    //Serial.flush() //is very slow
+  }
+
+  // Check if data is available on Software Serial
+  while (COMMS_SERIAL.available()) {
+    String data = COMMS_SERIAL.readString();
+    Serial.println(data); // Send data to USB Serial
+
+    //LoRaSerial.flush();
+  }
 }
