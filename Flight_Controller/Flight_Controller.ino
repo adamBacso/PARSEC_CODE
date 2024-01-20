@@ -134,7 +134,7 @@ class Telemetry{
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
-            printBuffer += std::to_string(data);
+            printBuffer += String(data).c_str();
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
@@ -143,7 +143,7 @@ class Telemetry{
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
-            printBuffer += std::to_string(data);
+            printBuffer += String(data).c_str();
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
@@ -152,7 +152,7 @@ class Telemetry{
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
-            printBuffer += std::to_string(data);
+            printBuffer += String(data).c_str();
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
@@ -161,7 +161,7 @@ class Telemetry{
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
-            printBuffer += std::to_string(data) + separator;
+            printBuffer += String(data).c_str() + separator;
             transmissionSize += sizeof(data) + sizeof(separator);
         }
 
