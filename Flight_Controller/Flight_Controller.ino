@@ -39,9 +39,7 @@ class LightSensor {
 };
 
 // **COMPONENTS**
-Adafruit_BME280 bme;
-Adafruit_MPU6050 mpu;
-LightSensor guva = LightSensor(14,3.3);
+
 
 class Led {
     public:
@@ -141,6 +139,10 @@ class Telemetry{
 
         String printBuffer = "";
         float transmissionSize;
+
+        Adafruit_BME280 bme;
+        Adafruit_MPU6050 mpu;
+        LightSensor guva = LightSensor(14,3.3);
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
