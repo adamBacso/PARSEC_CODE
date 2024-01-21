@@ -68,14 +68,14 @@ class MyGPS : public TinyGPSPlus {
         }
 
         void FeedGPS(){
-            /*
             while(GPS_SERIAL.available()){
                 this->encode(GPS_SERIAL.read());
             }
-            */
+            /*
            while (*gpsStream){
             this->encode(*gpsStream++);
            }
+            */
         }
 };
 MyGPS gps;
