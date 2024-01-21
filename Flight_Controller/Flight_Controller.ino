@@ -108,9 +108,6 @@ class Radio{
         int syncWord;
         int bandwidth;
 
-        // error codes
-        int err_serviceUnavailable = 506;
-        int err_invalidRange = 416;
     public:
         bool is_available(){
             return COMMS_SERIAL;
@@ -135,61 +132,45 @@ class Telemetry{
         uint32_t broadcastStartTime = 0;
 
         int packetCount = 0;
-        char separator = 'a';
-        char checksumIdentifier = 'c';
+        char separator = ',';
+        char checksumIdentifier = '*';
 
         int commsBaudRate = 115200;
         float percentActive = 0.1; // decimal notation
-        uint32_t sleepAmount;
+        float sleepAmount;
 
-        std::string printBuffer = "";
-        uint32_t transmissionSize;
+        String printBuffer = "";
+        float transmissionSize;
 
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
-        void prints(float data){
-            if (this->is_comms_available()){
-                COMMS_SERIAL.print(data);
-                COMMS_SERIAL.print(separator);
-            }
-            printBuffer += String(data).c_str() + separator;
-            transmissionSize += sizeof(data) + sizeof(separator);
-        }
-
-        void prints(int data){
-            if (this->is_comms_available()){
-                COMMS_SERIAL.print(data);
-                COMMS_SERIAL.print(separator);
-            }
-            printBuffer += String(data).c_str() + separator;
-            transmissionSize += sizeof(data) + sizeof(separator);
-        }
-        
-        void prints(uint32_t data){
-            if (this->is_comms_available()){
-                COMMS_SERIAL.print(data);
-                COMMS_SERIAL.print(separator);
-            }
-            printBuffer += String(data).c_str() + separator;
-            transmissionSize += sizeof(data) + sizeof(separator);
-        }
-
-        void prints(char data){
-            if (this->is_comms_available()){
-                COMMS_SERIAL.print(data);
-                COMMS_SERIAL.print(separator);
-            }
-            printBuffer += data + separator;
-            transmissionSize += sizeof(data) + sizeof(separator);
-        }
-
         void prints(String data){
+            /*
             if (this->is_comms_available()){
                 COMMS_SERIAL.print(data);
                 COMMS_SERIAL.print(separator);
             }
-            printBuffer += data.c_str() + separator;
-            transmissionSize += sizeof(data) + sizeof(separator);
+            */
+            String dataBlock = this->string_to_hex(data + separator);
+            printBuffer += dataBlock;
+            transmissionSize += sizeof(dataBlock);
+        }
+
+        String string_to_hex(String data){
+            String hexString = "";
+  
+            for (int i = 0; i < data.length(); i++) {
+                char currentChar = data.charAt(i);
+                
+                // Convert the character to its hexadecimal representation
+                char hexChars[3];
+                sprintf(hexChars, "%02X", currentChar);
+                
+                // Append the hexadecimal representation to the result string
+                hexString += hexChars;
+            }
+            
+            return hexString;
         }
 
     public:
@@ -203,13 +184,14 @@ class Telemetry{
 
         void broadcast(){
             uint32_t elapsedTime = millis()-broadcastStartTime;
-            if (broadcasting && (elapsedTime>=sleepAmount)){
+            if (broadcasting){// && (elapsedTime>=sleepAmount)){
                 broadcastStartTime = millis();
-                COMMS_SERIAL.print("radio tx ");
+                //COMMS_SERIAL.print("radio tx ");
                 this->telemetry_send();
-                COMMS_SERIAL.println(" 1"); // FIXME: may need to print \\r\\n instead
+                //COMMS_SERIAL.println(" 1");
                 set_sleep_amount(elapsedTime);
                 led.flash();
+                delay(1000);
             }
         }
 
@@ -218,20 +200,20 @@ class Telemetry{
             transmissionSize = 0;
             printBuffer = "";
 
-            this->prints(packetCount++);                                        // packet count
-            this->prints(timer.get_time());                                     // current mission time
+            this->prints(String(packetCount++));                                        // packet count
+            this->prints(String(timer.get_time()));                                     // current mission time
 
             // SYSTEM
             this->prints(tempmonGetTemp());                                     // internal temperature
 
             // BME280
             if (bme.begin(0x76)){
-                this->prints(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));         // altitude
-                this->prints(bme.readTemperature());                            // temperature
-                this->prints(bme.readHumidity());                               // humidity
+                this->prints(String(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)));         // altitude
+                this->prints(String(bme.readTemperature()));                            // temperature
+                this->prints(String(bme.readHumidity()));                               // humidity
             }else{
                 for (int i = 0; i<3; i++){
-                    this->prints(0);
+                    this->prints("#");
                 }
             }
 
@@ -240,40 +222,39 @@ class Telemetry{
                 sensors_event_t a, g, temp;
                 mpu.getEvent(&a, &g, &temp);
                 // acceleration
-                this->prints(a.acceleration.x);                                 // acceleration x
-                this->prints(a.acceleration.y);                                 // acceleration y
-                this->prints(a.acceleration.z);                                 // acceleration z
+                this->prints(String(a.acceleration.x));                                 // acceleration x
+                this->prints(String(a.acceleration.y));                                 // acceleration y
+                this->prints(String(a.acceleration.z));                                 // acceleration z
                 // gyroscope
-                this->prints(g.gyro.x);                                         // gyro x
-                this->prints(g.gyro.y);                                         // gyro y
-                this->prints(g.gyro.z);                                         // gyro z
+                this->prints(String(g.gyro.x));                                         // gyro x
+                this->prints(String(g.gyro.y));                                         // gyro y
+                this->prints(String(g.gyro.z));                                         // gyro z
                 // temperature
-                this->prints(temp.temperature);                                 // mpu ext. temperature
+                this->prints(String(temp.temperature));                                 // mpu ext. temperature
             }else{
                 for (int i = 0; i<7; i++){
-                    this->prints(0);
+                    this->prints("#");
                 }
             }
 
             // GUVA-S12SD
-            this->prints(guva.readIntensity());                                 // light intensity
+            this->prints(String(guva.readIntensity()));                                 // light intensity
 
-            this->prints(transmissionSize);                                     // tx size (w/o checksum)
-            this->prints(sleepAmount);                                          // sleep time
+            this->prints(String(transmissionSize));                                     // tx size (w/o checksum)
+            this->prints(String(sleepAmount));                                          // sleep time
 
             // CHECKSUM
-            COMMS_SERIAL.print(checksumIdentifier);
             String checksum = this->get_checksum(printBuffer);                  // checksum
-            COMMS_SERIAL.println(checksum);
-            Serial.println(timer.get_timestamp());
-            transmissionSize += sizeof(checksumIdentifier) + sizeof(checksum);
+            printBuffer += this->string_to_hex(checksumIdentifier+checksum);
+            transmissionSize += sizeof(checksumIdentifier + checksum);
             transmissionSize *= 8;
+            COMMS_SERIAL.println("radio tx " + printBuffer + " 1");
+            Serial.println(printBuffer);
         }
 
         void begin(){
             COMMS_SERIAL.begin(commsBaudRate);
             while (!COMMS_SERIAL);
-            COMMS_SERIAL.println("radio tx abc123 1");
             
             sleepAmount = 1000;
             packetCount = 0;
@@ -287,7 +268,7 @@ class Telemetry{
             sleepAmount = (1-percentActive)*10 * transmissionTime - elapsedTime;
         }
 
-        String get_checksum(std::string data){
+        String get_checksum(String data){
             unsigned int checksum = CRC32::calculate(data.c_str(), data.length());
             char checksumStr[3];
             snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
