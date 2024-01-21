@@ -18,12 +18,12 @@
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.2\\libraries\\SD\\src",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.2\\libraries\\SdFat\\src",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.2\\libraries\\SPI",
-
                 "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\CRC32\\src",
                 "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_Unified_Sensor",
                 "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_BME280_Library",
                 "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_BusIO",
                 "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_MPU6050",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\TinyGPSPlus\\src",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\5.4.1\\arm\\arm-none-eabi\\include\\c++\\5.4.1",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\5.4.1\\arm\\arm-none-eabi\\include\\c++\\5.4.1\\arm-none-eabi",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\5.4.1\\arm\\arm-none-eabi\\include\\c++\\5.4.1\\backward",

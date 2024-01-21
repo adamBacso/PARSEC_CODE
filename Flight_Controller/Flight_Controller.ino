@@ -5,6 +5,7 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <Adafruit_MPU6050.h>
+#include <TinyGPSPlus.h>
 
 #include <core_pins.h>
 #include <usb_serial.h>
@@ -38,8 +39,40 @@ class LightSensor {
         }
 };
 
-// **COMPONENTS**
+class MyGPS : public TinyGPSPlus {
+    private:
+        int gpsBaud;
 
+        const char *gpsStream =
+            "$GPRMC,045103.000,A,3014.1984,N,09749.2872,W,0.67,161.46,030913,,,A*7C\r\n"
+            "$GPGGA,045104.000,3014.1985,N,09749.2873,W,1,09,1.2,211.6,M,-22.5,M,,0000*62\r\n"
+            "$GPRMC,045200.000,A,3014.3820,N,09748.9514,W,36.88,65.02,030913,,,A*77\r\n"
+            "$GPGGA,045201.000,3014.3864,N,09748.9411,W,1,10,1.2,200.8,M,-22.5,M,,0000*6C\r\n"
+            "$GPRMC,045251.000,A,3014.4275,N,09749.0626,W,0.51,217.94,030913,,,A*7D\r\n"
+            "$GPGGA,045252.000,3014.4273,N,09749.0628,W,1,09,1.3,206.9,M,-22.5,M,,0000*6F\r\n";
+
+    public:
+        void begin(){
+            this->set_baud(9600);
+            GPS_SERIAL.begin(gpsBaud);
+        }
+
+        void set_baud(int baud){
+            gpsBaud = baud;
+        }
+
+        void feed_gps(){
+            while(GPS_SERIAL.available()){
+                this->encode(GPS_SERIAL.read());
+            }
+            /*
+           while (*gpsStream){
+            this->encode(*gpsStream++);
+           }
+            */
+        }
+};
+MyGPS gps;
 
 class Led {
     public:
@@ -155,13 +188,12 @@ class Telemetry{
             */
             String dataBlock = this->string_to_hex(data + separator);
             printBuffer += dataBlock;
-            transmissionSize += sizeof(dataBlock);
         }
 
         String string_to_hex(String data){
             String hexString = "";
   
-            for (int i = 0; i < data.length(); i++) {
+            for (unsigned int i = 0; i < data.length(); i++) {
                 char currentChar = data.charAt(i);
                 
                 // Convert the character to its hexadecimal representation
@@ -195,6 +227,7 @@ class Telemetry{
                 led.flash();
                 delay(1000);
             }
+            gps.feed_gps();
         }
 
         void telemetry_send(){
@@ -207,6 +240,23 @@ class Telemetry{
 
             // SYSTEM
             this->prints(tempmonGetTemp());                                     // internal temperature
+
+            // GPS - WLR089u0
+            if (gps.location.isValid()){
+                this->prints(String(gps.location.age())); // TODO: decide if age is needed or not
+                this->prints(String(gps.location.lat()));
+                this->prints(String(gps.location.lng()));
+            }else{
+                for (int i = 0; i<3; i++){
+                    this->prints(0);
+                }
+            }
+
+            if (gps.altitude.isValid()){
+                this->prints(String(gps.altitude.meters()));
+            }else{
+                this->prints(0);
+            }
 
             // BME280
             if (bme.begin(0x76)){
@@ -248,7 +298,7 @@ class Telemetry{
             // CHECKSUM
             String checksum = this->get_checksum(printBuffer);                  // checksum
             printBuffer += this->string_to_hex(checksumIdentifier+checksum);
-            transmissionSize += sizeof(checksumIdentifier + checksum);
+            transmissionSize += sizeof(printBuffer);
             transmissionSize *= 8;
             COMMS_SERIAL.println("radio tx " + printBuffer + " 1");
             Serial.println(printBuffer);
