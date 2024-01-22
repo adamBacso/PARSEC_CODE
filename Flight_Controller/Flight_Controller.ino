@@ -207,6 +207,27 @@ class Telemetry{
             return hexString;
         }
 
+        String hex_to_string(String hexString){
+            String asciiString = "";
+
+            // Loop through the hex string two characters at a time
+            for (int i = 0; i < hexString.length(); i += 2) {
+                // Extract two characters from the hex string
+                String hexPair = hexString.substring(i, i + 2);
+
+                // Convert the hex pair to an integer
+                int intValue = strtol(hexPair.c_str(), NULL, 16);
+
+                // Convert the integer to its ASCII character
+                char asciiChar = char(intValue);
+
+                // Append the ASCII character to the result string
+                asciiString += asciiChar;
+            }
+
+            return asciiString;
+        }
+
     public:
         Telemetry(){
             this->begin();
@@ -301,7 +322,7 @@ class Telemetry{
             transmissionSize += sizeof(printBuffer);
             transmissionSize *= 8;
             COMMS_SERIAL.println("radio tx " + printBuffer + " 1");
-            Serial.println(printBuffer);
+            Serial.println(this->hex_to_string(printBuffer));
         }
 
         void begin(){
@@ -314,7 +335,7 @@ class Telemetry{
             this->start_broadcast();
         }
 
-        void set_sleep_amount(uint32_t elapsedTime){
+        void set_sleep_amount(uint32_t elapsedTime){ // FIXME: gives negative sleep values
             uint32_t transmissionTime = (transmissionSize / commsBaudRate) * 1000;
             elapsedTime -= transmissionTime;
             sleepAmount = (1-percentActive)*10 * transmissionTime - elapsedTime;
