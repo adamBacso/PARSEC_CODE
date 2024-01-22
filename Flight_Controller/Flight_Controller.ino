@@ -180,12 +180,6 @@ class Telemetry{
         const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
         void prints(String data){
-            /*
-            if (this->is_comms_available()){
-                COMMS_SERIAL.print(data);
-                COMMS_SERIAL.print(separator);
-            }
-            */
             String dataBlock = data + separator;
             printBuffer += dataBlock;
         }
@@ -195,12 +189,8 @@ class Telemetry{
   
             for (unsigned int i = 0; i < data.length(); i++) {
                 char currentChar = data.charAt(i);
-                
-                // Convert the character to its hexadecimal representation
                 char hexChars[3];
                 sprintf(hexChars, "%02X", currentChar);
-                
-                // Append the hexadecimal representation to the result string
                 hexString += hexChars;
             }
             
@@ -210,18 +200,10 @@ class Telemetry{
         String hex_to_string(String hexString){
             String asciiString = "";
 
-            // Loop through the hex string two characters at a time
             for (int i = 0; i < hexString.length(); i += 2) {
-                // Extract two characters from the hex string
                 String hexPair = hexString.substring(i, i + 2);
-
-                // Convert the hex pair to an integer
                 int intValue = strtol(hexPair.c_str(), NULL, 16);
-
-                // Convert the integer to its ASCII character
                 char asciiChar = char(intValue);
-
-                // Append the ASCII character to the result string
                 asciiString += asciiChar;
             }
 
