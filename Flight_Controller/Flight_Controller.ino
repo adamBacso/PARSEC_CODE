@@ -123,8 +123,8 @@ class MissionTime{
         
 
         float get_time(){
-            uint32_t elapsedTime = (millis()-missionStartTime) / 100; // in deciseconds xD
-            return float(elapsedTime)/10; // should return seconds to one decimal precision
+            uint32_t elapsedTime = (millis()-missionStartTime) / 10; // in deciseconds xD
+            return float(elapsedTime)/100; // should return seconds to one decimal precision
         }
 
         void true_sleep(int milli){
@@ -167,7 +167,7 @@ class Telemetry{
         char checksumIdentifier = '*';
 
         int commsBaudRate = 115200;
-        float percentActive = 0.1; // decimal notation
+        float percentActive = 10;
         float sleepAmount;
 
         String printBuffer = "";
@@ -200,7 +200,7 @@ class Telemetry{
         String hex_to_string(String hexString){
             String asciiString = "";
 
-            for (int i = 0; i < hexString.length(); i += 2) {
+            for (unsigned int i = 0; i < hexString.length(); i += 2) {
                 String hexPair = hexString.substring(i, i + 2);
                 int intValue = strtol(hexPair.c_str(), NULL, 16);
                 char asciiChar = char(intValue);
@@ -221,14 +221,13 @@ class Telemetry{
 
         void broadcast(){
             uint32_t elapsedTime = millis()-broadcastStartTime;
-            if (broadcasting){// && (elapsedTime>=sleepAmount)){
+            if (broadcasting && (elapsedTime>=sleepAmount)){
                 broadcastStartTime = millis();
                 //COMMS_SERIAL.print("radio tx ");
                 this->telemetry_send();
                 //COMMS_SERIAL.println(" 1");
-                set_sleep_amount(elapsedTime);
+                set_sleep_amount();
                 led.flash();
-                delay(1000);
             }
             gps.feed_gps();
         }
@@ -242,7 +241,7 @@ class Telemetry{
             this->prints(String(timer.get_time()));                                     // current mission time
 
             // SYSTEM
-            this->prints(tempmonGetTemp());                                     // internal temperature
+            this->prints(tempmonGetTemp());                                             // internal temperature
 
             // GPS - WLR089u0
             if (gps.location.isValid()){
@@ -295,11 +294,10 @@ class Telemetry{
             // GUVA-S12SD
             this->prints(String(guva.readIntensity()));                                 // light intensity
 
-            this->prints(String(transmissionSize));                                     // tx size (w/o checksum)
             this->prints(String(sleepAmount));                                          // sleep time
 
             // CHECKSUM
-            String checksum = this->get_checksum(printBuffer);                  // checksum
+            String checksum = this->get_checksum(printBuffer);                          // checksum
             printBuffer += checksumIdentifier+checksum;
             transmissionSize += sizeof(printBuffer);
             transmissionSize *= 8;
@@ -309,7 +307,7 @@ class Telemetry{
 
         void begin(){
             COMMS_SERIAL.begin(commsBaudRate);
-            while (!COMMS_SERIAL);
+            Serial.begin(9600);
             
             sleepAmount = 1000;
             packetCount = 0;
@@ -317,10 +315,9 @@ class Telemetry{
             this->start_broadcast();
         }
 
-        void set_sleep_amount(uint32_t elapsedTime){ // FIXME: gives negative sleep values
-            uint32_t transmissionTime = (transmissionSize / commsBaudRate) * 1000;
-            elapsedTime -= transmissionTime;
-            sleepAmount = (1-percentActive)*10 * transmissionTime - elapsedTime;
+        void set_sleep_amount(){ // FIXME: gives negative sleep values
+            uint16_t transmissionTime = (transmissionSize / commsBaudRate) * 1000;
+            sleepAmount = (transmissionTime/percentActive)*(100-percentActive);
         }
 
         String get_checksum(String data){
