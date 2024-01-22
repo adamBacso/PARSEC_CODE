@@ -35,14 +35,17 @@ class mySD{
 
         void begin(){
             if (SD.begin(chipSelect)){
-                flightLog = SD.open(logName);
+                flightLog = SD.open(logName, FILE_WRITE);
+                if (flightLog){
+                    flightLog.println("~~~~~~ SYSTEM RESTART ~~~~~~");
+                }
                 flightLog.close();
             }
         }
 
-        void write(std::string data){
+        void write(String data){
             if (SD.begin(chipSelect)){
-                flightLog = SD.open(logName);
+                flightLog = SD.open(logName, FILE_WRITE);
                 if (flightLog){
                     flightLog.println(data.c_str());
                 }
