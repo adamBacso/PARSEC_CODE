@@ -62,14 +62,14 @@ class MyGPS : public TinyGPSPlus {
         }
 
         void feed_gps(){
-            while(GPS_SERIAL.available()){
+            /*
+            if (GPS_SERIAL.available()){
                 this->encode(GPS_SERIAL.read());
             }
-            /*
-           while (*gpsStream){
-            this->encode(*gpsStream++);
-           }
             */
+            if (*gpsStream){
+                this->encode(*gpsStream++);
+            }
         }
 };
 MyGPS gps;
@@ -186,7 +186,7 @@ class Telemetry{
                 COMMS_SERIAL.print(separator);
             }
             */
-            String dataBlock = this->string_to_hex(data + separator);
+            String dataBlock = data + separator;
             printBuffer += dataBlock;
         }
 
@@ -269,14 +269,14 @@ class Telemetry{
                 this->prints(String(gps.location.lng()));
             }else{
                 for (int i = 0; i<3; i++){
-                    this->prints(0);
+                    this->prints("#");
                 }
             }
 
             if (gps.altitude.isValid()){
                 this->prints(String(gps.altitude.meters()));
             }else{
-                this->prints(0);
+                this->prints("#");
             }
 
             // BME280
@@ -318,11 +318,11 @@ class Telemetry{
 
             // CHECKSUM
             String checksum = this->get_checksum(printBuffer);                  // checksum
-            printBuffer += this->string_to_hex(checksumIdentifier+checksum);
+            printBuffer += checksumIdentifier+checksum;
             transmissionSize += sizeof(printBuffer);
             transmissionSize *= 8;
-            COMMS_SERIAL.println("radio tx " + printBuffer + " 1");
-            Serial.println(this->hex_to_string(printBuffer));
+            COMMS_SERIAL.println("radio tx " + this->string_to_hex(printBuffer) + " 1");
+            Serial.println(printBuffer);
         }
 
         void begin(){
