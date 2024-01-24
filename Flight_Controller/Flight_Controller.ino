@@ -62,14 +62,14 @@ class MyGPS : public TinyGPSPlus {
         }
 
         void feed_gps(){
-            /*
             if (GPS_SERIAL.available()){
                 this->encode(GPS_SERIAL.read());
             }
-            */
+            /*
             if (*gpsStream){
                 this->encode(*gpsStream++);
             }
+            */
         }
 };
 MyGPS gps;
@@ -311,6 +311,8 @@ class Telemetry{
             
             sleepAmount = 1000;
             packetCount = 0;
+            mpu.begin(0x68);
+            mpu.reset();
             timer.begin();
             this->start_broadcast();
         }
