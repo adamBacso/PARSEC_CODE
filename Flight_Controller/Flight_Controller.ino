@@ -311,8 +311,6 @@ class Telemetry{
             
             sleepAmount = 1000;
             packetCount = 0;
-            mpu.begin(0x68);
-            mpu.reset();
             timer.begin();
             this->start_broadcast();
         }
