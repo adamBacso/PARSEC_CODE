@@ -183,18 +183,21 @@ String hex_to_string(String hexString){
 }
 
 
-void handle_data(){ 
-    uint32_t elapsedTime = millis()-broadcastStartTime;
-    if (inFlight) {
-        if (elapsedTime>=sleepAmount){
-            broadcastStartTime = millis();
-            telemetry_send();
-            set_sleep_amount();
-            flash();
+void handle_data(){
+    while (1){
+        uint32_t elapsedTime = millis()-broadcastStartTime;
+        if (inFlight) {
+            if (elapsedTime>=sleepAmount){
+                broadcastStartTime = millis();
+                telemetry_send();
+                set_sleep_amount();
+                flash();
+            }
+            feed_gps();
+        } else {
+            delegate_telemetry();
         }
-        feed_gps();
-    } else {
-        delegate_telemetry();
+        threads.yield();
     }
 }
 
@@ -294,8 +297,6 @@ void telemetry_begin(){
     Serial.begin(9600);
     sleepAmount = 1000;
     packetCount = 0;
-    mpu.begin(0x68);
-    mpu.reset();
     mission_begin();
     // TODO: write csv header to sd card
 }
@@ -337,8 +338,8 @@ void setup(){
     telemetry_begin();
     led_begin();
     flash();
+    threads.addThread(handle_data);
 }
 
 void loop(){
-    handle_data();
 }
