@@ -6,6 +6,7 @@
 #include <Adafruit_BME280.h>
 #include <Adafruit_MPU6050.h>
 #include <TinyGPSPlus.h>
+#include <TeensyThreads.h>
 
 #include <core_pins.h>
 #include <usb_serial.h>
@@ -159,8 +160,8 @@ class Telemetry{
     private:
         Radio lora;
         MissionTime timer;
-        bool broadcasting = false;
         uint32_t broadcastStartTime = 0;
+        bool isFlight = true;
 
         int packetCount = 0;
         char separator = ',';
@@ -215,21 +216,19 @@ class Telemetry{
             this->begin();
         }
 
-        void start_broadcast(){
-            broadcasting = true;
-        }
-
-        void broadcast(){
+        void handle_data(){ 
             uint32_t elapsedTime = millis()-broadcastStartTime;
-            if (broadcasting && (elapsedTime>=sleepAmount)){
-                broadcastStartTime = millis();
-                //COMMS_SERIAL.print("radio tx ");
-                this->telemetry_send();
-                //COMMS_SERIAL.println(" 1");
-                set_sleep_amount();
-                led.flash();
+            if (isFlight) {
+                if (elapsedTime>=sleepAmount){
+                    broadcastStartTime = millis();
+                    this->telemetry_send();
+                    set_sleep_amount();
+                    led.flash();
+                }
+                gps.feed_gps();
+            } else {
+                delegate_telemetry();
             }
-            gps.feed_gps();
         }
 
         void telemetry_send(){
@@ -305,16 +304,20 @@ class Telemetry{
             Serial.println(printBuffer);
         }
 
+        void delegate_telemetry(){
+            if (COMMS_SERIAL.available()>0){
+                
+            }
+        }
+
         void begin(){
             COMMS_SERIAL.begin(commsBaudRate);
             Serial.begin(9600);
-            
             sleepAmount = 1000;
             packetCount = 0;
             mpu.begin(0x68);
             mpu.reset();
             timer.begin();
-            this->start_broadcast();
         }
 
         void set_sleep_amount(){ // FIXME: gives negative sleep values
@@ -353,5 +356,5 @@ void setup(){
 }
 
 void loop(){
-    data.broadcast();
+    data.handle_data();
 }
