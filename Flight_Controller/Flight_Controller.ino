@@ -330,9 +330,7 @@ bool is_lora(){
 }
 
 // .availableForWrite() is shared between Serial and LoRaClass
-bool is_comms_available(){
-    return COMMS_SERIAL;
-}
+
 
 void setup(){
     // TODO: add component validation
