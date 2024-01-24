@@ -161,11 +161,13 @@ class Telemetry{
         Radio lora;
         MissionTime timer;
         uint32_t broadcastStartTime = 0;
-        bool isFlight = true;
+        bool inFlight = true;
 
         int packetCount = 0;
-        char separator = ',';
-        char checksumIdentifier = '*';
+        const char separator = ',';
+        const char checksumIdentifier = '*';
+
+        const String telemetryPreamble = "radio tx ";
 
         int commsBaudRate = 115200;
         float percentActive = 10;
@@ -218,7 +220,7 @@ class Telemetry{
 
         void handle_data(){ 
             uint32_t elapsedTime = millis()-broadcastStartTime;
-            if (isFlight) {
+            if (inFlight) {
                 if (elapsedTime>=sleepAmount){
                     broadcastStartTime = millis();
                     this->telemetry_send();
@@ -232,7 +234,9 @@ class Telemetry{
         }
 
         void telemetry_send(){
-            while (!(COMMS_SERIAL.availableForWrite()>0)); // FIXME: high risk loop 
+            while (!(COMMS_SERIAL.availableForWrite()>0)){
+                delay(1);
+            } // FIXME: high risk loop 
             transmissionSize = 0;
             printBuffer = "";
 
@@ -244,7 +248,7 @@ class Telemetry{
 
             // GPS - WLR089u0
             if (gps.location.isValid()){
-                this->prints(String(gps.location.age())); // TODO: decide if age is needed or not
+                this->prints(String(gps.location.age()));
                 this->prints(String(gps.location.lat()));
                 this->prints(String(gps.location.lng()));
             }else{
@@ -305,8 +309,18 @@ class Telemetry{
         }
 
         void delegate_telemetry(){
-            if (COMMS_SERIAL.available()>0){
+            if (COMMS_SERIAL.available()){
+                String incoming = COMMS_SERIAL.readString();
                 
+                if (incoming.startsWith(telemetryPreamble)){
+                    incoming = incoming.substring(telemetryPreamble.length());
+                    incoming = this->hex_to_string(incoming);
+
+                    // TODO: write incoming data to sd
+                    if (this->checksum_invalid(incoming)){
+                        // TODO: write error code to indicate deviation from checksum
+                    }
+                }
             }
         }
 
@@ -318,6 +332,7 @@ class Telemetry{
             mpu.begin(0x68);
             mpu.reset();
             timer.begin();
+            // TODO: write csv header to sd card
         }
 
         void set_sleep_amount(){ // FIXME: gives negative sleep values
@@ -330,6 +345,15 @@ class Telemetry{
             char checksumStr[3];
             snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
             return String(checksumStr);
+        }
+
+        bool checksum_invalid(String data){
+            String checksum = data.substring(data.indexOf(checksumIdentifier));
+            if (this->get_checksum(data)==checksum){
+                return false;
+            } else {
+                return true;
+            }
         }
 
         void send(const String& message){
