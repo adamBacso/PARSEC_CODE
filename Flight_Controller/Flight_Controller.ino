@@ -15,7 +15,7 @@
 
 // SERIAL COMMS  
 // LORA RADIO - Serial1      // USB SERIAL - **Serial** through USB port
-#define COMMS_SERIAL    Serial1
+#define COMMS_SERIAL    Serial
 // GPS - serial through pin(8,7) [TX,RX]
 #define GPS_SERIAL      Serial2
 
@@ -131,13 +131,35 @@ void receive(int milli){
 }
 
 uint32_t broadcastStartTime = 0;
-bool inFlight = true;
+bool inFlight = false;
 
 int packetCount = 0;
 const char separator = ',';
 const char checksumIdentifier = '*';
 
 const String telemetryPreamble = "radio tx ";
+const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),light intenity,sleep amount,checksum";
+const String* headerArray = string_to_array(csvHeader);
+const int indexPacketCount = 0;
+const int indexMissionTime = 1;
+const int indexInternalTemperature = 2;
+const int indexBarometricAltitude = 3;
+const int indexExternalBmeTemperature = 4;
+const int indexHumidity = 5;
+const int indexGpsAge = 6;
+const int indexLatitude = 7;
+const int indexLongitude = 8;
+const int indexGpsAltitude = 9;
+const int indexAccelerationX = 10;
+const int indexAccelerationY = 11;
+const int indexAccelerationZ = 12;
+const int indexGyroscopeX = 13;
+const int indexGyroscopeY = 14;
+const int indexGyroscopeZ = 15;
+const int indexExternalMpuTemperature = 16;
+const int indexLightIntensity = 17;
+const int indexSleepAmount = 18;
+const int indexChecksum = 19;
 
 int commsBaudRate = 115200;
 float percentActive = 10;
@@ -208,17 +230,19 @@ void telemetry_send(){
     transmissionSize = 0;
     printBuffer = "";
 
-    prints(String(packetCount++));                                        // packet count
-    prints(String(get_time()));                                     // current mission time
+    prints(String(packetCount++));                                          // packet count
+    prints(String(get_time()));                                             // current mission time
 
     // SYSTEM
-    prints(tempmonGetTemp());                                             // internal temperature
+    prints(tempmonGetTemp());                                               // internal temperature
 
     // GPS - WLR089u0
     if (gps.location.isValid()){
-        prints(String(gps.location.age()));
-        prints(String(gps.location.lat()));
-        prints(String(gps.location.lng()));
+        prints(String(gps.location.age(
+
+        )));                                 // gps age
+        prints(String(gps.location.lat()));                                 // latitude
+        prints(String(gps.location.lng()));                                 // longitude
     }else{
         for (int i = 0; i<3; i++){
             prints("#");
@@ -226,16 +250,16 @@ void telemetry_send(){
     }
 
     if (gps.altitude.isValid()){
-        prints(String(gps.altitude.meters()));
+        prints(String(gps.altitude.meters()));                              // gps altitude
     }else{
         prints("#");
     }
 
     // BME280
     if (bme.begin(0x76)){
-        prints(String(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)));         // altitude
-        prints(String(bme.readTemperature()));                            // temperature
-        prints(String(bme.readHumidity()));                               // humidity
+        prints(String(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)));           // altitude
+        prints(String(bme.readTemperature()));                              // temperature
+        prints(String(bme.readHumidity()));                                 // humidity
     }else{
         for (int i = 0; i<3; i++){
             prints("#");
@@ -247,15 +271,15 @@ void telemetry_send(){
         sensors_event_t a, g, temp;
         mpu.getEvent(&a, &g, &temp);
         // acceleration
-        prints(String(a.acceleration.x));                                 // acceleration x
-        prints(String(a.acceleration.y));                                 // acceleration y
-        prints(String(a.acceleration.z));                                 // acceleration z
+        prints(String(a.acceleration.x));                                   // acceleration x
+        prints(String(a.acceleration.y));                                   // acceleration y
+        prints(String(a.acceleration.z));                                   // acceleration z
         // gyroscope
-        prints(String(g.gyro.x));                                         // gyro x
-        prints(String(g.gyro.y));                                         // gyro y
-        prints(String(g.gyro.z));                                         // gyro z
+        prints(String(g.gyro.x));                                           // gyro x
+        prints(String(g.gyro.y));                                           // gyro y
+        prints(String(g.gyro.z));                                           // gyro z
         // temperature
-        prints(String(temp.temperature));                                 // mpu ext. temperature
+        prints(String(temp.temperature));                                   // mpu ext. temperature
     } else {
         for (int i = 0; i<7; i++){
             prints("#");
@@ -263,12 +287,12 @@ void telemetry_send(){
     }
 
     // GUVA-S12SD
-    prints(String(read_guva_intensity()));                                 // light intensity
+    prints(String(read_guva_intensity()));                                  // light intensity
 
-    prints(String(sleepAmount));                                          // sleep time
+    prints(String(sleepAmount));                                            // sleep time
 
     // CHECKSUM
-    String checksum = get_checksum(printBuffer);                          // checksum
+    String checksum = get_checksum(printBuffer);                            // checksum
     printBuffer += checksumIdentifier+checksum;
     transmissionSize += sizeof(printBuffer);
     transmissionSize *= 8;
@@ -278,6 +302,7 @@ void telemetry_send(){
 
 void delegate_telemetry(){
     if (COMMS_SERIAL.available()){
+        flash();
         String incoming = COMMS_SERIAL.readString();
         
         if (incoming.startsWith(telemetryPreamble)){
@@ -288,6 +313,8 @@ void delegate_telemetry(){
             if (checksum_invalid(incoming)){
                 // TODO: write error code to indicate deviation from checksum
             }
+            
+            display_incoming_data(incoming);
         }
     }
 }
@@ -299,6 +326,32 @@ void telemetry_begin(){
     packetCount = 0;
     mission_begin();
     // TODO: write csv header to sd card
+}
+
+void display_incoming_data(String data){
+}
+
+String* string_to_array(String data){
+    int dataCount = 1;
+    for (int i = 0; i < data.length(); i++){
+        if (data[i] == separator){
+            dataCount++;
+        }
+    }
+
+    String* resultArray = new String[dataCount];
+
+    // Use strtok to split the input string at commas
+    char* token = strtok(const_cast<char*>(data.c_str()), ",");
+    int index = 0;
+
+    // Loop through the tokens and store them in the array
+    while (token != NULL) {
+    resultArray[index++] = String(token);
+    token = strtok(NULL, ",");
+    }
+
+    return resultArray;
 }
 
 void set_sleep_amount(){ // FIXME: gives negative sleep values
