@@ -138,7 +138,7 @@ const char separator = ',';
 const char checksumIdentifier = '*';
 
 const String telemetryPreamble = "radio tx ";
-const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),light intenity,sleep amount,checksum";
+const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),light intenity,uptime,sleep amount,checksum";
 const String* headerArray = string_to_array(csvHeader);
 const int indexPacketCount = 0;
 const int indexMissionTime = 1;
@@ -158,8 +158,9 @@ const int indexGyroscopeY = 14;
 const int indexGyroscopeZ = 15;
 const int indexExternalMpuTemperature = 16;
 const int indexLightIntensity = 17;
-const int indexSleepAmount = 18;
-const int indexChecksum = 19;
+const int indexuPtime = 18;
+const int indexSleepAmount = 19;
+const int indexChecksum = 20;
 
 int commsBaudRate = 115200;
 float percentActive = 10;
@@ -203,17 +204,16 @@ String hex_to_string(String hexString){
 
     return asciiString;
 }
-
+uint32_t elapsedTime;
 void handle_data(){
     while (1){
         if (inFlight) {
-            uint32_t elapsedTime = millis()-broadcastStartTime;
-            if (elapsedTime>=sleepAmount){
-                broadcastStartTime = millis();
-                telemetry_send();
-                set_sleep_amount();
-                flash();
-            }
+            elapsedTime = millis()-broadcastStartTime;
+            broadcastStartTime = millis();
+            telemetry_send();
+            set_sleep_amount();
+            flash();
+            threads.sleep();
             feed_gps();
         } else {
             delegate_incoming_telemetry();
@@ -288,6 +288,7 @@ void telemetry_send(){
     // GUVA-S12SD
     prints(String(read_guva_intensity()));                                  // light intensity
 
+    prints(String(elapsedTime));                                            // uptime
     prints(String(sleepAmount));                                            // sleep time
 
     // CHECKSUM
