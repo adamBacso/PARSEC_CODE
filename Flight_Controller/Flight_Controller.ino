@@ -131,7 +131,7 @@ void receive(int milli){
 }
 
 uint32_t broadcastStartTime = 0;
-bool inFlight = false;
+bool inFlight = true;
 
 int packetCount = 0;
 const char separator = ',';
@@ -204,11 +204,10 @@ String hex_to_string(String hexString){
     return asciiString;
 }
 
-
 void handle_data(){
     while (1){
-        uint32_t elapsedTime = millis()-broadcastStartTime;
         if (inFlight) {
+            uint32_t elapsedTime = millis()-broadcastStartTime;
             if (elapsedTime>=sleepAmount){
                 broadcastStartTime = millis();
                 telemetry_send();
@@ -217,7 +216,7 @@ void handle_data(){
             }
             feed_gps();
         } else {
-            delegate_telemetry();
+            delegate_incoming_telemetry();
         }
         threads.yield();
     }
@@ -300,7 +299,7 @@ void telemetry_send(){
     Serial.println(printBuffer);
 }
 
-void delegate_telemetry(){
+void delegate_incoming_telemetry(){
     if (COMMS_SERIAL.available()){
         flash();
         String incoming = COMMS_SERIAL.readString();
@@ -373,14 +372,6 @@ bool checksum_invalid(String data){
     } else {
         return true;
     }
-}
-
-void send(const String& message){
-    COMMS_SERIAL.println(message);            
-}
-
-bool is_lora(){
-    return false;
 }
 
 // .availableForWrite() is shared between Serial and LoRaClass
