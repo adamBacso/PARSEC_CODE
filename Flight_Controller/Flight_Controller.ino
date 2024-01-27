@@ -169,8 +169,8 @@ float sleepAmount;
 String printBuffer = "";
 float transmissionSize;
 
-Adafruit_BME280 bme;
-Adafruit_MPU6050 mpu;
+Adafruit_BME280 bme; const int bmeAddress = 0x76;
+Adafruit_MPU6050 mpu; const int mpuAddress = 0x68;
 
 const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
@@ -213,7 +213,7 @@ void handle_data(){
             telemetry_send();
             set_sleep_amount();
             flash();
-            threads.sleep();
+            threads.sleep(sleepAmount);
             feed_gps();
         } else {
             delegate_incoming_telemetry();
@@ -255,7 +255,7 @@ void telemetry_send(){
     }
 
     // BME280
-    if (bme.begin(0x76)){
+    if (bme.begin(bmeAddress)){
         prints(String(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)));           // altitude
         prints(String(bme.readTemperature()));                              // temperature
         prints(String(bme.readHumidity()));                                 // humidity
@@ -266,7 +266,7 @@ void telemetry_send(){
     }
 
     // MPU-6050
-    if (mpu.begin(0x68)){
+    if (mpu.begin(mpuAddress)){
         sensors_event_t a, g, temp;
         mpu.getEvent(&a, &g, &temp);
         // acceleration
@@ -375,7 +375,22 @@ bool checksum_invalid(String data){
     }
 }
 
-// .availableForWrite() is shared between Serial and LoRaClass
+// FLIGHT CONTROLLER
+float previousAltitude=0;
+uint32_t lastSampleTime=0;
+float get_vertical_speed(){
+    float currentAltitude;
+    if (bme.begin(bmeAddress)){
+        currentAltitude = bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
+    } else {
+        currentAltitude = 0;
+    }
+    float verticalSpeed = (currentAltitude-previousAltitude)/(millis()-lastSampleTime);
+    lastSampleTime = millis();
+    return verticalSpeed;
+}
+
+
 
 
 void setup(){
