@@ -1,7 +1,7 @@
 int currentAngle;
 int read_potentiometer(){
     int analogValue = analogRead(A0);
-    int angle = map(analogValue, 0, 1023, -360, 360, 0);
+    int angle = map(analogValue, 0, 1023, 0, 180, 0);
     return angle;
 }
 
