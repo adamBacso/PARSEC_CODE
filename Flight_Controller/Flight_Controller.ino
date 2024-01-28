@@ -1,5 +1,4 @@
 #include <PWMServo.h>
-
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
@@ -148,27 +147,28 @@ const String telemetryPreamble = "radio tx ";
 const String commandPreamble = "CMD_";
 const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),light intenity,uptime,sleep amount,checksum";
 const String* headerArray = string_to_array(csvHeader);
-const int indexPacketCount = 0;
-const int indexMissionTime = 1;
-const int indexInternalTemperature = 2;
-const int indexBarometricAltitude = 3;
-const int indexExternalBmeTemperature = 4;
-const int indexHumidity = 5;
-const int indexGpsAge = 6;
-const int indexLatitude = 7;
-const int indexLongitude = 8;
-const int indexGpsAltitude = 9;
-const int indexAccelerationX = 10;
-const int indexAccelerationY = 11;
-const int indexAccelerationZ = 12;
-const int indexGyroscopeX = 13;
-const int indexGyroscopeY = 14;
-const int indexGyroscopeZ = 15;
-const int indexExternalMpuTemperature = 16;
-const int indexLightIntensity = 17;
-const int indexuPtime = 18;
-const int indexSleepAmount = 19;
-const int indexChecksum = 20;
+int index = 0;
+int indexPacketCount = index++;
+int indexMissionTime = index++;
+int indexInternalTemperature = index++;
+int indexBarometricAltitude = index++;
+int indexExternalBmeTemperature = index++;
+int indexHumidity = index++;
+int indexGpsAge = index++;
+int indexLatitude = index++;
+int indexLongitude = index++;
+int indexGpsAltitude = index++;
+int indexAccelerationX = index++;
+int indexAccelerationY = index++;
+int indexAccelerationZ = index++;
+int indexGyroscopeX = index++;
+int indexGyroscopeY = index++;
+int indexGyroscopeZ = index++;
+int indexExternalMpuTemperature = index++;
+int indexLightIntensity = index++;
+int indexuPtime = index++;
+int indexSleepAmount = index++;
+int indexChecksum = index++;
 
 int commsBaudRate = 115200;
 float percentActive = 10;
