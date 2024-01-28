@@ -14,6 +14,7 @@
             "includePath": [
                 "C:\\Users\\adamg\\AppData\\Local\\Temp\\arduino\\sketches\\0C08503D84C0DD0D4D7B7B33D06050D7\\pch",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.2\\cores\\teensy4",
+                "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.2\\libraries\\PWMServo",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.2\\libraries\\Wire",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.2\\libraries\\SD\\src",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.2\\libraries\\SdFat\\src",

@@ -1,3 +1,5 @@
+#include <PWMServo.h>
+
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
@@ -15,10 +17,12 @@
 
 // SERIAL COMMS  
 // LORA RADIO - Serial1      // USB SERIAL - **Serial** through USB port
-#define COMMS_SERIAL    Serial
+#define COMMS_SERIAL    Serial1
 // GPS - serial through pin(8,7) [TX,RX]
 #define GPS_SERIAL      Serial2
 
+// PINS
+int servoPin = 2;
 
 int guvaAnalogPin = 14;
 float guvaOperatingVoltage = 3.3;
@@ -26,6 +30,9 @@ int resolution = 1024;
 
 float guvaCalibrationValue = 0;
 
+void guva_begin(){
+    pinMode(guvaAnalogPin, INPUT);
+}
 
 float read_guva_intensity(){
     float sensorValue = analogRead(guvaAnalogPin);
@@ -138,6 +145,7 @@ const char separator = ',';
 const char checksumIdentifier = '*';
 
 const String telemetryPreamble = "radio tx ";
+const String commandPreamble = "CMD_";
 const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),light intenity,uptime,sleep amount,checksum";
 const String* headerArray = string_to_array(csvHeader);
 const int indexPacketCount = 0;
@@ -224,8 +232,8 @@ void handle_data(){
 
 void telemetry_send(){
     while (!(COMMS_SERIAL.availableForWrite()>0)){
-        delay(1);
-    } // FIXME: high risk loop 
+        threads.delay(1);
+    }
     transmissionSize = 0;
     printBuffer = "";
 
@@ -237,9 +245,7 @@ void telemetry_send(){
 
     // GPS - WLR089u0
     if (gps.location.isValid()){
-        prints(String(gps.location.age(
-
-        )));                                 // gps age
+        prints(String(gps.location.age()));                                 // gps age
         prints(String(gps.location.lat()));                                 // latitude
         prints(String(gps.location.lng()));                                 // longitude
     }else{
@@ -257,6 +263,7 @@ void telemetry_send(){
     // BME280
     if (bme.begin(bmeAddress)){
         prints(String(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)));           // altitude
+        prints(String(get_vertical_speed()));                               // vertical speed
         prints(String(bme.readTemperature()));                              // temperature
         prints(String(bme.readHumidity()));                                 // humidity
     }else{
@@ -313,10 +320,39 @@ void delegate_incoming_telemetry(){
             if (checksum_invalid(incoming)){
                 // TODO: write error code to indicate deviation from checksum
             }
-            
-            display_incoming_data(incoming);
+            else{
+                if (incoming.startsWith(commandPreamble)){
+                    handle_command(incoming.substring(commandPreamble.length()));
+                } else{
+                    display_incoming_data(incoming);
+                }
+            }
         }
     }
+}
+
+/*
+__syntax__: xxx_123_123_... => COMMAND-CODE_ARG1_ARG2_...
+1xx - RADIO
+
+2xx - SENSORS
+
+3xx - CONTROL
+    310 - zero servo
+    320 - set servo position to <position>
+    321 - set servo position to <position> under <time> ms
+
+*/
+void handle_command(String command){
+    switch (command.substring(0, command.indexOf(separator)).toInt()){
+        case (320):
+            set_servo_position(command.substring(command.indexOf(separator)+1).toInt());
+    }
+    
+}
+
+void set_servo_position(int position){
+
 }
 
 void telemetry_begin(){
@@ -390,13 +426,27 @@ float get_vertical_speed(){
     return verticalSpeed;
 }
 
+void control(){
+    
+}
 
+PWMServo servo;
+int servoCurrentPosition;
+void servo_to_position(int position){
+    servo.write(position);
+    servoCurrentPosition = position;
+}
 
+void servo_begin(int position = 0){
+    servo.attach(servoPin);
+    servo_to_position(position);
+    servo.read();
+}
 
 void setup(){
-    // TODO: add component validation
     telemetry_begin();
     led_begin();
+    servo_begin();
     flash();
     threads.addThread(handle_data);
 }
