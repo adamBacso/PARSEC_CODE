@@ -1,7 +1,7 @@
 int currentAngle;
 int read_potentiometer(){
     int analogValue = analogRead(A0);
-    int angle = map(analogValue, 0, 1023, 0, 180, 0);
+    int angle = map(analogValue, 0, 1023, -360, 360, 0);
     return angle;
 }
 
@@ -32,7 +32,6 @@ String string_to_hex(int numericData){
     return hexString;
 }
 
-
 void setup(){
     Serial.begin(9600);
     Serial1.begin(115200);
@@ -40,9 +39,12 @@ void setup(){
     pinMode(A0, INPUT);
 }
 
+String commandId = "CMD320";
 void loop(){
     if (currentAngle != read_potentiometer()){
-        Serial1.println("radio tx " + string_to_hex(read_potentiometer()) + " 1");
+        int newAngle = read_potentiometer();
+        Serial1.println("radio tx " + string_to_hex(commandId) + string_to_hex(newAngle) + " 1");
+        Serial.println(newAngle);
     }
     delay(800);
 }

@@ -144,7 +144,7 @@ const char separator = ',';
 const char checksumIdentifier = '*';
 
 const String telemetryPreamble = "radio tx ";
-const String commandPreamble = "CMD_";
+const String commandPreamble = "CMD";
 const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),light intenity,uptime,sleep amount,checksum";
 const String* headerArray = string_to_array(csvHeader);
 int index = 0;
@@ -332,7 +332,7 @@ void delegate_incoming_telemetry(){
 }
 
 /*
-__syntax__: xxx_123_123_... => COMMAND-CODE_ARG1_ARG2_...
+__syntax__: CMDxxx,123,123,... => COMMAND-CODE_ARG1_ARG2_...
 1xx - RADIO
 
 2xx - SENSORS
@@ -344,15 +344,53 @@ __syntax__: xxx_123_123_... => COMMAND-CODE_ARG1_ARG2_...
 
 */
 void handle_command(String command){
-    switch (command.substring(0, command.indexOf(separator)).toInt()){
+    switch (command.substring(0, 4).toInt()){
         case (320):
-            set_servo_position(command.substring(command.indexOf(separator)+1).toInt());
+            int targetAngle = 0;
+            set_servo_position(targetAngle);
     }
     
 }
 
-void set_servo_position(int position){
+PWMServo servo;
+int servoCurrentPosition = 0;
+int servoSpeed = 45;
+int servoSpeedRatio = 1;
+int clockwise = -1;
+int servoNeutral = 90;
 
+void set_servo_position(int position){
+    if (position>servoCurrentPosition){
+        servo.write(servoNeutral+servoSpeed);
+    } else if (position<servoCurrentPosition){
+        servo.write(servoNeutral-servoSpeed);
+    }
+    threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
+    servo_stop();
+    threads.yield();
+}
+
+void servo_stop(){
+    servo.write(90);
+}
+
+void servo_clockwise(int speed = 135){
+    servo.write(speed);
+}
+
+void servo_counterclockwise(int speed = 45){
+    servo.write(speed);
+}
+
+void servo_to_position(int position){
+    servo.write(position);
+    servoCurrentPosition = position;
+}
+
+void servo_begin(int position = 0){
+    servo.attach(servoPin);
+    servo_to_position(position);
+    servo.read();
 }
 
 void telemetry_begin(){
@@ -428,19 +466,6 @@ float get_vertical_speed(){
 
 void control(){
     
-}
-
-PWMServo servo;
-int servoCurrentPosition;
-void servo_to_position(int position){
-    servo.write(position);
-    servoCurrentPosition = position;
-}
-
-void servo_begin(int position = 0){
-    servo.attach(servoPin);
-    servo_to_position(position);
-    servo.read();
 }
 
 void setup(){
