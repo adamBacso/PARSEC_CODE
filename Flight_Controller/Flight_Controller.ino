@@ -15,32 +15,17 @@
 #include <string>
 
 // SERIAL COMMS  
-// LORA RADIO - Serial1      // USB SERIAL - **Serial** through USB port
-#define COMMS_SERIAL    Serial1
-// GPS - serial through pin(8,7) [TX,RX]
-#define GPS_SERIAL      Serial2
+// LORA RADIO // USB SERIAL - **Serial** through USB port
+#define COMMS_SERIAL    Serial2
+
+int commsBaudRate = 115200;
+// GPS
+#define GPS_SERIAL      Serial1
 
 // PINS
 int servoPin = 2;
 
-int guvaAnalogPin = 14;
-float guvaOperatingVoltage = 3.3;
 int resolution = 1024;
-
-float guvaCalibrationValue = 0;
-
-void guva_begin(){
-    pinMode(guvaAnalogPin, INPUT);
-}
-
-float read_guva_intensity(){
-    float sensorValue = analogRead(guvaAnalogPin);
-    return (sensorValue/resolution*guvaOperatingVoltage)-guvaCalibrationValue;
-}
-
-void calibrate(){
-    guvaCalibrationValue = read_guva_intensity();
-}
 
 TinyGPSPlus gps;
 int gpsBaud = 9600;
@@ -75,9 +60,13 @@ void led_begin(){
     digitalWrite(LED_BUILTIN,LOW);
 }
 
-void flash(){
+void flash(bool isThreaded = false){
     digitalWrite(LED_BUILTIN,HIGH);
-    delay(25);
+    if (isThreaded){
+        threads.delay(25);
+    } else {
+        delay(25);
+    }
     digitalWrite(LED_BUILTIN,LOW);
 }
 
@@ -133,7 +122,7 @@ void send_request(String command){
 }
 
 void receive(int milli){
-    COMMS_SERIAL.println("radio rx " + milli);
+    COMMS_SERIAL.println("radio rx " + string_to_hex(String(milli)));
 }
 
 uint32_t broadcastStartTime = 0;
@@ -145,8 +134,9 @@ const char checksumIdentifier = '*';
 
 const String telemetryPreamble = "radio tx ";
 const String commandPreamble = "CMD";
-const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),light intenity,uptime,sleep amount,checksum";
+const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),,uptime,sleep amount,checksum";
 const String* headerArray = string_to_array(csvHeader);
+/*
 int index = 0;
 int indexPacketCount = index++;
 int indexMissionTime = index++;
@@ -165,20 +155,19 @@ int indexGyroscopeX = index++;
 int indexGyroscopeY = index++;
 int indexGyroscopeZ = index++;
 int indexExternalMpuTemperature = index++;
-int indexLightIntensity = index++;
-int indexuPtime = index++;
+int indexUptime = index++;
 int indexSleepAmount = index++;
 int indexChecksum = index++;
+*/
 
-int commsBaudRate = 115200;
 float percentActive = 10;
 float sleepAmount;
 
 String printBuffer = "";
 float transmissionSize;
 
-Adafruit_BME280 bme; const int bmeAddress = 0x76;
-Adafruit_MPU6050 mpu; const int mpuAddress = 0x68;
+Adafruit_BME280 bme; int bmeAddress = 0x76;
+Adafruit_MPU6050 mpu; int mpuAddress = 0x68;
 
 const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
@@ -214,7 +203,9 @@ String hex_to_string(String hexString){
 }
 uint32_t elapsedTime;
 void handle_data(){
-    while (1){
+    flash();
+    while (true){
+        //Serial.println("Handling Data");
         if (inFlight) {
             elapsedTime = millis()-broadcastStartTime;
             broadcastStartTime = millis();
@@ -223,8 +214,8 @@ void handle_data(){
             flash();
             threads.sleep(sleepAmount);
             feed_gps();
-        } else {
             delegate_incoming_telemetry();
+        } else {
         }
         threads.yield();
     }
@@ -292,9 +283,6 @@ void telemetry_send(){
         }
     }
 
-    // GUVA-S12SD
-    prints(String(read_guva_intensity()));                                  // light intensity
-
     prints(String(elapsedTime));                                            // uptime
     prints(String(sleepAmount));                                            // sleep time
 
@@ -308,26 +296,32 @@ void telemetry_send(){
 }
 
 void delegate_incoming_telemetry(){
+    //Serial.println("checking incoming data!");
     if (COMMS_SERIAL.available()){
+        //Serial.println("got data!!!!!!");
         flash();
         String incoming = COMMS_SERIAL.readString();
+        Serial.println("echo: "+incoming);
         
         if (incoming.startsWith(telemetryPreamble)){
             incoming = incoming.substring(telemetryPreamble.length());
             incoming = hex_to_string(incoming);
+            Serial.println("string echo: "+incoming);
 
             // TODO: write incoming data to sd
             if (checksum_invalid(incoming)){
                 // TODO: write error code to indicate deviation from checksum
             }
-            else{
-                if (incoming.startsWith(commandPreamble)){
-                    handle_command(incoming.substring(commandPreamble.length()));
-                } else{
-                    display_incoming_data(incoming);
-                }
+            if (incoming.startsWith(commandPreamble)){
+                Serial.println("command detected");
+                handle_command(incoming.substring(commandPreamble.length()));
+            } else{
+                display_incoming_data(incoming);
             }
         }
+    } else {
+        //Serial.println("No incoming data!");
+        threads.yield();
     }
 }
 
@@ -344,10 +338,10 @@ __syntax__: CMDxxx,123,123,... => COMMAND-CODE_ARG1_ARG2_...
 
 */
 void handle_command(String command){
-    switch (command.substring(0, 4).toInt()){
+    switch (command.substring(0,3).toInt()){
         case (320):
-            int targetAngle = 0;
-            set_servo_position(targetAngle);
+            set_servo_position((int)command.substring(3).toInt());
+            break;
     }
     
 }
@@ -365,9 +359,10 @@ void set_servo_position(int position){
     } else if (position<servoCurrentPosition){
         servo.write(servoNeutral-servoSpeed);
     }
-    threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
+    //threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
     servo_stop();
-    threads.yield();
+    servoCurrentPosition = position;
+    Serial.println(servoCurrentPosition);
 }
 
 void servo_stop(){
@@ -375,6 +370,7 @@ void servo_stop(){
 }
 
 void servo_clockwise(int speed = 135){
+    Serial.println("cw");
     servo.write(speed);
 }
 
@@ -382,19 +378,16 @@ void servo_counterclockwise(int speed = 45){
     servo.write(speed);
 }
 
-void servo_to_position(int position){
-    servo.write(position);
-    servoCurrentPosition = position;
-}
-
 void servo_begin(int position = 0){
     servo.attach(servoPin);
-    servo_to_position(position);
+    set_servo_position(position);
     servo.read();
 }
 
 void telemetry_begin(){
     COMMS_SERIAL.begin(commsBaudRate);
+    //receive(0);
+    servo_clockwise();
     Serial.begin(9600);
     sleepAmount = 1000;
     packetCount = 0;
@@ -407,7 +400,7 @@ void display_incoming_data(String data){
 
 String* string_to_array(String data){
     int dataCount = 1;
-    for (int i = 0; i < data.length(); i++){
+    for (unsigned int i = 0; i < data.length(); i++){
         if (data[i] == separator){
             dataCount++;
         }

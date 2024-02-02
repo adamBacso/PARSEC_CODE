@@ -1,6 +1,6 @@
 {
+    "port": "COM7",
     "configuration": "usb=serial,speed=600,opt=o2std,keys=en-us",
     "board": "teensy:avr:teensy40",
-    "sketch": "Flight_Controller\\Flight_Controller.ino",
-    "port": "COM7"
+    "sketch": "Flight_Controller\\Flight_Controller.ino"
 }
