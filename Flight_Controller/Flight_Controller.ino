@@ -344,7 +344,7 @@ void handle_command(String command){
     
 }
 
-PWMServo servo;
+PWMServo servo; // FIXME: fix usage
 int servoCurrentPosition = 0;
 int servoSpeed = 45;
 int servoSpeedRatio = 1;
