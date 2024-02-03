@@ -126,7 +126,7 @@ void receive(int milli){
 }
 
 uint32_t broadcastStartTime = 0;
-bool inFlight = true;
+bool inFlight = false;
 
 int packetCount = 0;
 const char separator = ',';
@@ -214,8 +214,8 @@ void handle_data(){
             flash();
             threads.sleep(sleepAmount);
             feed_gps();
-            delegate_incoming_telemetry();
         } else {
+            delegate_incoming_telemetry();
         }
         threads.yield();
     }
@@ -313,14 +313,12 @@ void delegate_incoming_telemetry(){
                 // TODO: write error code to indicate deviation from checksum
             }
             if (incoming.startsWith(commandPreamble)){
-                Serial.println("command detected");
                 handle_command(incoming.substring(commandPreamble.length()));
             } else{
                 display_incoming_data(incoming);
             }
         }
     } else {
-        //Serial.println("No incoming data!");
         threads.yield();
     }
 }
@@ -359,10 +357,11 @@ void set_servo_position(int position){
     } else if (position<servoCurrentPosition){
         servo.write(servoNeutral-servoSpeed);
     }
-    //threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
+    threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
     servo_stop();
     servoCurrentPosition = position;
     Serial.println(servoCurrentPosition);
+    threads.yield();
 }
 
 void servo_stop(){
@@ -386,7 +385,7 @@ void servo_begin(int position = 0){
 
 void telemetry_begin(){
     COMMS_SERIAL.begin(commsBaudRate);
-    //receive(0);
+    receive(0);
     servo_clockwise();
     Serial.begin(9600);
     sleepAmount = 1000;
