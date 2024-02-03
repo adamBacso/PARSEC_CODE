@@ -386,7 +386,6 @@ void servo_begin(int position = 0){
 void telemetry_begin(){
     COMMS_SERIAL.begin(commsBaudRate);
     receive(0);
-    servo_clockwise();
     Serial.begin(9600);
     sleepAmount = 1000;
     packetCount = 0;
