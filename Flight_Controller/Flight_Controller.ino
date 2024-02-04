@@ -23,7 +23,6 @@ int commsBaudRate = 115200;
 #define GPS_SERIAL      Serial1
 
 // PINS
-int servoPin = 2;
 
 int resolution = 1024;
 
@@ -132,7 +131,7 @@ int packetCount = 0;
 const char separator = ',';
 const char checksumIdentifier = '*';
 
-const String telemetryPreamble = "radio tx ";
+const String telemetryPreamble = "radio_rx ";
 const String commandPreamble = "CMD";
 const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),,uptime,sleep amount,checksum";
 const String* headerArray = string_to_array(csvHeader);
@@ -297,13 +296,17 @@ void telemetry_send(){
 
 void delegate_incoming_telemetry(){
     //Serial.println("checking incoming data!");
+    if (Serial.available()){
+        COMMS_SERIAL.println(Serial.readString());
+    }
     if (COMMS_SERIAL.available()){
-        //Serial.println("got data!!!!!!");
+        Serial.println("got data!!!!!!");
         flash();
         String incoming = COMMS_SERIAL.readString();
         Serial.println("echo: "+incoming);
         
         if (incoming.startsWith(telemetryPreamble)){
+            Serial.println("checking telemetry");
             incoming = incoming.substring(telemetryPreamble.length());
             incoming = hex_to_string(incoming);
             Serial.println("string echo: "+incoming);
@@ -335,49 +338,55 @@ __syntax__: CMDxxx,123,123,... => COMMAND-CODE_ARG1_ARG2_...
     321 - set servo position to <position> under <time> ms
 
 */
-void handle_command(String command){
-    switch (command.substring(0,3).toInt()){
-        case (320):
-            set_servo_position((int)command.substring(3).toInt());
-            break;
-    }
-    
-}
 
 int servoPin = 4;
 int servoCurrentPosition = 0;
 int servoSpeed = 45;
 int servoSpeedRatio = 1;
 int clockwise = -1;
-int servoNeutral = 92;
+int servoNeutral = 93;
 
-void set_servo_position(int position){
-    if (position>servoCurrentPosition){
-        servo_clockwise();
-    } else if (position<servoCurrentPosition){
-        servo_counterclockwise();
-    }
-    threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
-    servo_stop();
-    servoCurrentPosition = position;
-    Serial.println(servoCurrentPosition);
-    threads.yield();
-}
 
 void servo_stop(){
     analogWrite(servoPin,servoNeutral);
 }
 
-void servo_clockwise(int speed = 127){
+void servo_clockwise(int speed = 67){
     analogWrite(servoPin,speed);
 }
 
-void servo_counterclockwise(int speed = 58){
+void servo_counterclockwise(int speed = 120){
     analogWrite(servoPin,speed);
 }
 
+void set_servo_position(int position){
+    Serial.println("currentPosition: "+servoCurrentPosition);
+    Serial.println("setting position to: "+position);
+    /*
+    if (position>servoCurrentPosition){
+        servo_clockwise();
+    } else if (position<servoCurrentPosition){
+        servo_counterclockwise();
+    }
+    */
+    //threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
+    servo_clockwise(position);
+    threads.delay(1000);
+    servo_stop();
+    threads.yield();
+}
+void handle_command(String command){
+    Serial.println("command:"+command);
+    switch (command.substring(0,3).toInt()){
+        case (320):
+            Serial.println("trying to rotate");
+            set_servo_position((int)command.substring(3).toInt());
+            break;
+    }
+    
+}
 void servo_begin(){
-    analogWriteFrequency(servoPin,24);
+    analogWriteFrequency(servoPin,240);
     servo_stop();
 }
 
@@ -463,6 +472,7 @@ void setup(){
     servo_begin();
     flash();
     threads.addThread(handle_data);
+    COMMS_SERIAL.println("radio rx 0");
 }
 
 void loop(){
