@@ -345,17 +345,18 @@ void handle_command(String command){
 }
 
 PWMServo servo; // FIXME: fix usage
+int servoPin = 4;
 int servoCurrentPosition = 0;
 int servoSpeed = 45;
 int servoSpeedRatio = 1;
 int clockwise = -1;
-int servoNeutral = 90;
+int servoNeutral = 92;
 
 void set_servo_position(int position){
     if (position>servoCurrentPosition){
-        servo.write(servoNeutral+servoSpeed);
+        servo_clockwise();
     } else if (position<servoCurrentPosition){
-        servo.write(servoNeutral-servoSpeed);
+        servo_counterclockwise();
     }
     threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
     servo_stop();
@@ -365,22 +366,20 @@ void set_servo_position(int position){
 }
 
 void servo_stop(){
-    servo.write(90);
+    analogWrite(servoPin,servoNeutral);
 }
 
-void servo_clockwise(int speed = 135){
-    Serial.println("cw");
-    servo.write(speed);
+void servo_clockwise(int speed = 127){
+    analogWrite(servoPin,speed);
 }
 
-void servo_counterclockwise(int speed = 45){
-    servo.write(speed);
+void servo_counterclockwise(int speed = 58){
+    analogWrite(servoPin,speed);
 }
 
-void servo_begin(int position = 0){
-    servo.attach(servoPin);
-    set_servo_position(position);
-    servo.read();
+void servo_begin(){
+    analogWriteFrequency(servoPin,24);
+    servo_stop();
 }
 
 void telemetry_begin(){
