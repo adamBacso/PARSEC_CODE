@@ -61,7 +61,7 @@ def readFile(fileName):
         index += 1
     f.close()
 
-def draw_plot(y, x = [], formatting = "o"):
+def draw_plot(y, x = [], formatting = "o-"):
     if x == []:
         for i in range(len(y)):
             x.append(i)
@@ -92,5 +92,12 @@ def show_plot(title = ""):
     plt.show()
 
 readFile("Diagrams/test.txt")
-draw_plot(internalTemperature,time)
-show_plot("Test Diagram")
+draw_plot(accelerationX,time)
+draw_plot(accelerationY,time)
+draw_plot(accelerationZ,time)
+show_plot("Acceleration - time graph")
+
+draw_plot(gyroscopeX,time)
+draw_plot(gyroscopeY,time)
+draw_plot(gyroscopeZ,time)
+show_plot("Rotation - time graph")
