@@ -61,7 +61,7 @@ def readFile(fileName):
         index += 1
     f.close()
 
-def draw_plot(y, x = [], formatting = "o", title = ""):
+def draw_plot(y, x = [], formatting = "o"):
     if x == []:
         for i in range(len(y)):
             x.append(i)
@@ -70,7 +70,7 @@ def draw_plot(y, x = [], formatting = "o", title = ""):
         i = 0
         while i<len(y):
             try:
-                y[i] = int(y[i])
+                y[i] = float(y[i])
                 i+=1
             except ValueError:
                 del y[i]
@@ -79,7 +79,7 @@ def draw_plot(y, x = [], formatting = "o", title = ""):
         i = 0
         while i<len(x):
             try:
-                x[i] = int(x[i])
+                x[i] = float(x[i])
                 i+=1
             except ValueError:
                 del y[i]
@@ -92,6 +92,5 @@ def show_plot(title = ""):
     plt.show()
 
 readFile("Diagrams/test.txt")
-draw_plot(time,packetID)
-draw_plot(packetID)
+draw_plot(internalTemperature,time)
 show_plot("Test Diagram")
