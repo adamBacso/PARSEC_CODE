@@ -54,7 +54,7 @@ void feed_gps(){
 }
 
 
-void led_begin(){
+void led_begin(void){
     pinMode(LED_BUILTIN,OUTPUT);
     digitalWrite(LED_BUILTIN,LOW);
 }
@@ -75,12 +75,12 @@ unsigned long missionStartTime;
 
 unsigned long processStart;
 
-void mission_begin(){
+void mission_begin(void){
     missionStartTime = millis();
     processStart = 0;
 }
 
-String get_timestamp(){
+String get_timestamp(void){
     unsigned int seconds, minutes, hours;
     uint32_t elapsedTime = (millis()-missionStartTime)/1000; // in seconds
 
@@ -97,7 +97,7 @@ String get_timestamp(){
 }
 
 
-float get_time(){
+float get_time(void){
     uint32_t elapsedTime = (millis()-missionStartTime) / 10; // in deciseconds xD
     return float(elapsedTime)/100; // should return seconds to one decimal precision
 }
@@ -112,7 +112,7 @@ int radioFrequency = 868000000;
 int syncWord;
 int bandwidth;
 
-bool is_comms_available(){
+bool is_comms_available(void){
     return COMMS_SERIAL;
 }
 
@@ -120,12 +120,16 @@ void send_request(String command){
     COMMS_SERIAL.println(command);
 }
 
-void receive(int milli){
-    COMMS_SERIAL.println("radio rx " + string_to_hex(String(milli)));
+void receive(void){
+    COMMS_SERIAL.println("radio rx 0");
+}
+
+void stop_reception(void){
+    COMMS_SERIAL.println("radio rxstop");
 }
 
 uint32_t broadcastStartTime = 0;
-bool inFlight = false;
+bool inFlight = true;
 
 int packetCount = 0;
 const char separator = ',';
@@ -201,26 +205,25 @@ String hex_to_string(String hexString){
     return asciiString;
 }
 uint32_t elapsedTime;
-void handle_data(){
+void handle_data(void){
     flash();
     while (true){
-        //Serial.println("Handling Data");
         if (inFlight) {
             elapsedTime = millis()-broadcastStartTime;
             broadcastStartTime = millis();
             telemetry_send();
-            set_sleep_amount();
+            //set_sleep_amount();
             flash();
-            threads.sleep(sleepAmount);
+            threads.delay(250);
             feed_gps();
         } else {
             delegate_incoming_telemetry();
+            threads.delay(100);
         }
-        threads.yield();
     }
 }
 
-void telemetry_send(){
+void telemetry_send(void){
     while (!(COMMS_SERIAL.availableForWrite()>0)){
         threads.delay(1);
     }
@@ -294,22 +297,20 @@ void telemetry_send(){
     Serial.println(printBuffer);
 }
 
-void delegate_incoming_telemetry(){
+void delegate_incoming_telemetry(void){
     //Serial.println("checking incoming data!");
-    if (Serial.available()){
-        COMMS_SERIAL.println(Serial.readString());
-    }
+    
     if (COMMS_SERIAL.available()){
-        Serial.println("got data!!!!!!");
+        //Serial.println("got data!!!!!!");
         flash();
         String incoming = COMMS_SERIAL.readString();
-        Serial.println("echo: "+incoming);
+        //Serial.println("echo: "+incoming);
         
         if (incoming.startsWith(telemetryPreamble)){
-            Serial.println("checking telemetry");
+            //Serial.println("checking telemetry");
             incoming = incoming.substring(telemetryPreamble.length());
             incoming = hex_to_string(incoming);
-            Serial.println("string echo: "+incoming);
+            //Serial.println("string echo: "+incoming);
 
             // TODO: write incoming data to sd
             if (checksum_invalid(incoming)){
@@ -322,7 +323,6 @@ void delegate_incoming_telemetry(){
             }
         }
     } else {
-        threads.yield();
     }
 }
 
@@ -347,7 +347,7 @@ int clockwise = -1;
 int servoNeutral = 93;
 
 
-void servo_stop(){
+void servo_stop(void){
     analogWrite(servoPin,servoNeutral);
 }
 
@@ -360,8 +360,8 @@ void servo_counterclockwise(int speed = 120){
 }
 
 void set_servo_position(int position){
-    Serial.println("currentPosition: "+servoCurrentPosition);
-    Serial.println("setting position to: "+position);
+    //Serial.println("currentPosition: "+servoCurrentPosition);
+    //Serial.println("setting position to: "+position);
     /*
     if (position>servoCurrentPosition){
         servo_clockwise();
@@ -376,24 +376,23 @@ void set_servo_position(int position){
     threads.yield();
 }
 void handle_command(String command){
-    Serial.println("command:"+command);
+    //Serial.println("command:"+command);
     switch (command.substring(0,3).toInt()){
         case (320):
-            Serial.println("trying to rotate");
+            //Serial.println("trying to rotate");
             set_servo_position((int)command.substring(3).toInt());
             break;
     }
     
 }
-void servo_begin(){
+void servo_begin(void){
     analogWriteFrequency(servoPin,240);
     servo_stop();
 }
 
-void telemetry_begin(){
+void telemetry_begin(void){
     COMMS_SERIAL.begin(commsBaudRate);
-    receive(0);
-    Serial.begin(9600);
+    //Serial.begin(9600);
     sleepAmount = 1000;
     packetCount = 0;
     mission_begin();
@@ -426,7 +425,7 @@ String* string_to_array(String data){
     return resultArray;
 }
 
-void set_sleep_amount(){ // FIXME: gives negative sleep values
+void set_sleep_amount(void){
     uint16_t transmissionTime = (transmissionSize / commsBaudRate) * 1000;
     sleepAmount = (transmissionTime/percentActive)*(100-percentActive);
 }
@@ -450,7 +449,7 @@ bool checksum_invalid(String data){
 // FLIGHT CONTROLLER
 float previousAltitude=0;
 uint32_t lastSampleTime=0;
-float get_vertical_speed(){
+float get_vertical_speed(void){
     float currentAltitude;
     if (bme.begin(bmeAddress)){
         currentAltitude = bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
@@ -462,7 +461,7 @@ float get_vertical_speed(){
     return verticalSpeed;
 }
 
-void control(){
+void control(void){
     
 }
 
@@ -472,7 +471,9 @@ void setup(){
     servo_begin();
     flash();
     threads.addThread(handle_data);
-    COMMS_SERIAL.println("radio rx 0");
+    if (!inFlight){
+        receive();
+    }
 }
 
 void loop(){
