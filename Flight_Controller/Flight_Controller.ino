@@ -23,6 +23,35 @@ int commsBaudRate = 115200;
 #define GPS_SERIAL      Serial1
 
 // PINS
+const int chipSelect = 10;
+File flightLog;
+const char* logName = "flightLog.txt";
+
+int get_chipSelect(){
+    return chipSelect;
+}
+
+void sd_begin(void){
+    Serial.println("Trying to begin sd");
+    if (SD.begin(chipSelect)){
+        Serial.println("SD found!");
+        flightLog = SD.open(logName, FILE_WRITE);
+        if (flightLog){
+            flightLog.println("~~~~~~ SYSTEM RESTART ~~~~~~");
+        }
+        flightLog.close();
+    }
+}
+
+void sd_write(String data){
+    if (SD.begin(chipSelect)){
+        flightLog = SD.open(logName, FILE_WRITE);
+        if (flightLog){
+            flightLog.println(data.c_str());
+        }
+        flightLog.close();
+    }
+}
 
 int resolution = 1024;
 
@@ -36,11 +65,6 @@ const char *gpsStream =
     "$GPGGA,045201.000,3014.3864,N,09748.9411,W,1,10,1.2,200.8,M,-22.5,M,,0000*6C\r\n"
     "$GPRMC,045251.000,A,3014.4275,N,09749.0626,W,0.51,217.94,030913,,,A*7D\r\n"
     "$GPGGA,045252.000,3014.4273,N,09749.0628,W,1,09,1.3,206.9,M,-22.5,M,,0000*6F\r\n";
-
-
-void gps_begin(){
-    GPS_SERIAL.begin(gpsBaud);
-}
 
 void feed_gps(){
     if (GPS_SERIAL.available()){
@@ -208,24 +232,31 @@ uint32_t elapsedTime;
 void handle_data(void){
     flash();
     while (true){
-        if (inFlight) {
-            elapsedTime = millis()-broadcastStartTime;
-            broadcastStartTime = millis();
-            telemetry_send();
-            //set_sleep_amount();
-            flash();
-            threads.delay(250);
-            feed_gps();
-        } else {
-            delegate_incoming_telemetry();
-            threads.delay(100);
-        }
+        elapsedTime = millis()-broadcastStartTime;
+        broadcastStartTime = millis();
+        telemetry_send();
+        //set_sleep_amount();
+        flash();
+        //threads.delay(250);
+        delay(100);
+        feed_gps();
+        //threads.yield();
+    }
+}
+
+void handle_incoming_data(void){
+    flash();
+    while (true){
+        delegate_incoming_telemetry();
+        //threads.yield();
+        delay(100);
     }
 }
 
 void telemetry_send(void){
     while (!(COMMS_SERIAL.availableForWrite()>0)){
-        threads.delay(1);
+        //threads.delay(1);
+        delay(10);
     }
     transmissionSize = 0;
     printBuffer = "";
@@ -371,9 +402,10 @@ void set_servo_position(int position){
     */
     //threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
     servo_clockwise(position);
-    threads.delay(1000);
+    //threads.delay(1000);
+    delay(1000);
     servo_stop();
-    threads.yield();
+    //threads.yield();
 }
 void handle_command(String command){
     //Serial.println("command:"+command);
@@ -390,9 +422,13 @@ void servo_begin(void){
     servo_stop();
 }
 
-void telemetry_begin(void){
+void serial_begin(void){
     COMMS_SERIAL.begin(commsBaudRate);
-    //Serial.begin(9600);
+    Serial.begin(9600);
+    GPS_SERIAL.begin(gpsBaud);
+}
+
+void telemetry_begin(void){
     sleepAmount = 1000;
     packetCount = 0;
     mission_begin();
@@ -466,13 +502,19 @@ void control(void){
 }
 
 void setup(){
+    serial_begin();
     telemetry_begin();
+    sd_begin();
     led_begin();
     servo_begin();
     flash();
-    threads.addThread(handle_data);
-    if (!inFlight){
+    if (inFlight){
+        //threads.addThread(handle_data);
+        handle_data();
+    } else {
         receive();
+        //threads.addThread(handle_incoming_data);
+        handle_incoming_data();
     }
 }
 
