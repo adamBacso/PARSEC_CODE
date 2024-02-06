@@ -1,7 +1,7 @@
 #include <PWMServo.h>
 #include <Wire.h>
-#include <SD.h>
 #include <SPI.h>
+#include <SD.h>
 #include <CRC32.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
@@ -23,8 +23,10 @@ int commsBaudRate = 115200;
 #define GPS_SERIAL      Serial1
 
 // PINS
-const int chipSelect = 10;
-File flightLog;
+uint8_t chipSelect = 10U;
+Sd2Card card;
+SdVolume volume;
+SdFile flightLog;
 const char* logName = "flightLog.txt";
 
 int get_chipSelect(){
@@ -32,17 +34,39 @@ int get_chipSelect(){
 }
 
 void sd_begin(void){
-    Serial.println("Trying to begin sd");
-    if (SD.begin(chipSelect)){
-        Serial.println("SD found!");
-        flightLog = SD.open(logName, FILE_WRITE);
-        if (flightLog){
-            flightLog.println("~~~~~~ SYSTEM RESTART ~~~~~~");
-        }
-        flightLog.close();
+    Serial.print("\nInitializing SD card...");
+    pinMode(chipSelect,OUTPUT);
+
+
+    // we'll use the initialization code from the utility libraries
+    // since we're just testing if the card is working!
+    if (!card.init(SPI_HALF_SPEED, chipSelect)) {
+    Serial.println("initialization failed. Things to check:");
+    Serial.println("* is a card inserted?");
+    Serial.println("* is your wiring correct?");
+    Serial.println("* did you change the chipSelect pin to match your shield or module?");
+    return;
+    } else {
+    Serial.println("Wiring is correct and a card is present.");
+    }
+
+    // print the type of card
+    Serial.print("\nCard type: ");
+    switch(card.type()) {
+    case SD_CARD_TYPE_SD1:
+        Serial.println("SD1");
+        break;
+    case SD_CARD_TYPE_SD2:
+        Serial.println("SD2");
+        break;
+    case SD_CARD_TYPE_SDHC:
+        Serial.println("SDHC");
+        break;
+    default:
+        Serial.println("Unknown");
     }
 }
-
+/*
 void sd_write(String data){
     if (SD.begin(chipSelect)){
         flightLog = SD.open(logName, FILE_WRITE);
@@ -52,7 +76,7 @@ void sd_write(String data){
         flightLog.close();
     }
 }
-
+*/
 int resolution = 1024;
 
 TinyGPSPlus gps;
@@ -153,7 +177,7 @@ void stop_reception(void){
 }
 
 uint32_t broadcastStartTime = 0;
-bool inFlight = true;
+bool inFlight = false;
 
 int packetCount = 0;
 const char separator = ',';
@@ -249,7 +273,6 @@ void handle_incoming_data(void){
     while (true){
         delegate_incoming_telemetry();
         //threads.yield();
-        delay(100);
     }
 }
 
@@ -334,6 +357,8 @@ void delegate_incoming_telemetry(void){
     if (COMMS_SERIAL.available()){
         //Serial.println("got data!!!!!!");
         flash();
+        delay(1000);
+        flash();
         String incoming = COMMS_SERIAL.readString();
         //Serial.println("echo: "+incoming);
         
@@ -354,6 +379,9 @@ void delegate_incoming_telemetry(void){
             }
         }
     } else {
+        flash();
+        delay(100);
+        flash();
     }
 }
 
@@ -424,7 +452,8 @@ void servo_begin(void){
 
 void serial_begin(void){
     COMMS_SERIAL.begin(commsBaudRate);
-    Serial.begin(9600);
+    //Serial.begin(9600);
+    //while (!Serial){}
     GPS_SERIAL.begin(gpsBaud);
 }
 
@@ -504,7 +533,7 @@ void control(void){
 void setup(){
     serial_begin();
     telemetry_begin();
-    sd_begin();
+    //sd_begin();
     led_begin();
     servo_begin();
     flash();
