@@ -60,9 +60,39 @@ TinyGPSPlus gps; int gpsBaud = 9600;
 // SD CARD
 uint8_t chipSelect = 10U;
 File flightLog;
-const char* logName = "flightLog.txt";
+String logName = "flightLog";
+const String logType = ".txt";
 
 ///////////////////////////////////////////////////////////////////////////////////
+// ~SERIAL
+
+void serial_begin(void){
+    COMMS_SERIAL.begin(commsBaudRate);
+    Serial.begin(9600);
+    GPS_SERIAL.begin(gpsBaud);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// ~RADIO
+
+bool is_comms_available(void){
+    return COMMS_SERIAL;
+}
+
+void send_request(String command){
+    COMMS_SERIAL.println(command);
+}
+
+void receive(void){
+    COMMS_SERIAL.println("radio rx 0");
+}
+
+void stop_reception(void){
+    COMMS_SERIAL.println("radio rxstop");
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// ~SD CARD
 
 int get_chipSelect(void){
     return chipSelect;
@@ -80,16 +110,37 @@ void sd_begin(void){
         }
     }
     Serial.println("card initialized.");
+
+    bool fileUnique = false;
+    int fileIndex = 1;
+    while (!fileUnique){
+        
+        String nameToCheck = logName+fileIndex+logType;
+        if (SD.exists((nameToCheck).c_str())){
+            Serial.println(nameToCheck + " already exists!");
+            fileIndex++;
+        } else {
+            logName = logName+fileIndex+logType;
+            fileUnique = true;
+        }
+
+    }
 }
 
 void sd_write(String data){
-    if (SD.begin(chipSelect)){
-        flightLog = SD.open(logName, FILE_WRITE);
-        if (flightLog){
-            flightLog.println(data.c_str());
-        }
-        flightLog.close();
+    flightLog = SD.open(logName.c_str(), FILE_WRITE);
+    if (flightLog){
+        flightLog.println(data.c_str());
     }
+    flightLog.close();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// ~GPS
+
+void set_target(double latitude, double longitude){
+    targetLatitude = latitude;
+    targetLongitude = longitude;
 }
 
 const char *gpsStream =
@@ -100,7 +151,7 @@ const char *gpsStream =
     "$GPRMC,045251.000,A,3014.4275,N,09749.0626,W,0.51,217.94,030913,,,A*7D\r\n"
     "$GPGGA,045252.000,3014.4273,N,09749.0628,W,1,09,1.3,206.9,M,-22.5,M,,0000*6F\r\n";
 
-void feed_gps(){
+void feed_gps(void){
     if (GPS_SERIAL.available()){
         gps.encode(GPS_SERIAL.read());
     }
@@ -115,31 +166,27 @@ double distance_to_target(void){
     return gps.distanceBetween(gps.location.lat(),gps.location.lng(),targetLatitude,targetLongitude);
 }
 
-void set_target(double latitude, double longitude){
-    targetLatitude = latitude;
-    targetLongitude = longitude;
-}
 
 double course_to_target(void){
     return gps.courseTo(gps.location.lat(),gps.location.lng(),targetLatitude,targetLongitude);
 }
+
+///////////////////////////////////////////////////////////////////////////////////
+// ~LED
 
 void led_begin(void){
     pinMode(LED_BUILTIN,OUTPUT);
     digitalWrite(LED_BUILTIN,LOW);
 }
 
-void flash(bool isThreaded = false){
+void flash(){
     digitalWrite(LED_BUILTIN,HIGH);
-    if (isThreaded){
-        threads.delay(25);
-    } else {
-        delay(25);
-    }
+    delay(25);
     digitalWrite(LED_BUILTIN,LOW);
 }
 
-
+///////////////////////////////////////////////////////////////////////////////////
+// ~TIMER
 
 unsigned long missionStartTime;
 
@@ -168,8 +215,7 @@ String get_timestamp(void){
 
 
 float get_time(void){
-    uint32_t elapsedTime = (millis()-missionStartTime) / 10; // in deciseconds xD
-    return float(elapsedTime)/100; // should return seconds to one decimal precision
+    return float(millis()-missionStartTime)/1000;
 }
 
 void true_sleep(int milli){
@@ -177,57 +223,24 @@ void true_sleep(int milli){
     processStart = millis();
 }
 
-bool is_comms_available(void){
-    return COMMS_SERIAL;
-}
-
-void send_request(String command){
-    COMMS_SERIAL.println(command);
-}
-
-void receive(void){
-    COMMS_SERIAL.println("radio rx 0");
-}
-
-void stop_reception(void){
-    COMMS_SERIAL.println("radio rxstop");
-}
+///////////////////////////////////////////////////////////////////////////////////
+// ~TELEMETRY
 
 uint32_t broadcastStartTime = 0;
 bool inFlight = true;
 
 int packetCount = 0;
 
-/*
-int index = 0;
-int indexPacketCount = index++;
-int indexMissionTime = index++;
-int indexInternalTemperature = index++;
-int indexBarometricAltitude = index++;
-int indexExternalBmeTemperature = index++;
-int indexHumidity = index++;
-int indexGpsAge = index++;
-int indexLatitude = index++;
-int indexLongitude = index++;
-int indexGpsAltitude = index++;
-int indexAccelerationX = index++;
-int indexAccelerationY = index++;
-int indexAccelerationZ = index++;
-int indexGyroscopeX = index++;
-int indexGyroscopeY = index++;
-int indexGyroscopeZ = index++;
-int indexExternalMpuTemperature = index++;
-int indexUptime = index++;
-int indexSleepAmount = index++;
-int indexChecksum = index++;
-*/
-
 float sleepAmount;
 
 String printBuffer = "";
 float transmissionSize;
 
-
+void telemetry_begin(void){
+    sleepAmount = 1000;
+    packetCount = 0;
+    mission_begin();
+}
 
 void prints(String data){
     String dataBlock = data + separator;
@@ -259,6 +272,7 @@ String hex_to_string(String hexString){
 
     return asciiString;
 }
+
 uint32_t elapsedTime;
 void handle_data(void){
     flash();
@@ -272,18 +286,14 @@ void handle_data(void){
             //delay(100);
             feed_gps();
         }
-        //threads.yield();
+        threads.yield();
     }
 }
 
-void handle_incoming_data(void){
-    flash();
-    while (true){
-        delegate_incoming_telemetry();
-        //threads.yield();
-    }
+void set_sleep_amount(void){
+    uint16_t transmissionTime = (transmissionSize / commsBaudRate) * 1000;
+    sleepAmount = (transmissionTime/percentActive)*(100-percentActive);
 }
-
 
 void telemetry_send(void){
     while (!(COMMS_SERIAL.availableForWrite()>0)){
@@ -369,15 +379,33 @@ void telemetry_send(void){
     sd_write(printBuffer);
 }
 
+String get_checksum(String data){
+    unsigned int checksum = CRC32::calculate(data.c_str(), data.length());
+    char checksumStr[3];
+    snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
+    return String(checksumStr);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// ~INCOMING DATA HANDLING
+
+void handle_incoming_data(void){
+    flash();
+    while (true){
+        delegate_incoming_telemetry();
+        //threads.yield();
+    }
+}
 void delegate_incoming_telemetry(void){
     //Serial.println("checking incoming data!");
+    String incoming;
     
     if (COMMS_SERIAL.available()){
         //Serial.println("got data!!!!!!");
         flash();
         delay(1000);
         flash();
-        String incoming = COMMS_SERIAL.readString();
+        incoming = COMMS_SERIAL.readString();
         //Serial.println("echo: "+incoming);
         
         if (incoming.startsWith(telemetryPreamble)){
@@ -396,15 +424,19 @@ void delegate_incoming_telemetry(void){
                 display_incoming_data(incoming);
             }
         }
-    } else {
-        flash();
-        delay(100);
-        flash();
+    } else if (Serial.available()) {
+        
     }
 }
 
+void display_incoming_data(String data){
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// ~COMMAND
+
 /*
-__syntax__: CMDxxx,123,123,... => COMMAND-CODE_ARG1_ARG2_...
+__syntax__: CMDxxx123,123,... => COMMAND-CODEARG1,ARG2,...
 1xx - RADIO
 
 2xx - SENSORS
@@ -413,10 +445,30 @@ __syntax__: CMDxxx,123,123,... => COMMAND-CODE_ARG1_ARG2_...
     310 - zero servo
     320 - set servo position to <position>
     321 - set servo position to <position> under <time> ms
-
 */
 
+void handle_command(String command){
+    //Serial.println("command:"+command);
+    switch (command.substring(0,3).toInt()){
+        case (320):
+            //Serial.println("trying to rotate");
+            set_servo_position((int)command.substring(3).toInt());
+            break;
+    }
+    
+}
 
+bool checksum_invalid(String data){
+    String checksum = data.substring(data.indexOf(checksumIdentifier));
+    if (get_checksum(data)==checksum){
+        return false;
+    } else {
+        return true;
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// ~SERVO
 
 void servo_stop(void){
     analogWrite(servoPin,servoNeutral);
@@ -447,24 +499,17 @@ void pull_line_amount(float lineLength){
     set_servo_position(lineLength/drumRadius);
 }
 
-void handle_command(String command){
-    //Serial.println("command:"+command);
-    switch (command.substring(0,3).toInt()){
-        case (320):
-            //Serial.println("trying to rotate");
-            set_servo_position((int)command.substring(3).toInt());
-            break;
-    }
-    
-}
 
 void servo_begin(void){
     Serial.println("servo_begin");
     analogWriteFrequency(servoPin,240);
     servo_stop();
-    servoCurrentPosition = 0;
+    servo_reset();
 }
 
+void servo_zero(void){
+    servoCurrentPosition = 0;
+}
 void servo_reset(){
     set_servo_position(0);
 }
@@ -486,89 +531,8 @@ void servo_test(int iterations = 1){
     }
 }
 
-void serial_begin(void){
-    COMMS_SERIAL.begin(commsBaudRate);
-    Serial.begin(9600);
-    GPS_SERIAL.begin(gpsBaud);
-}
-
-void telemetry_begin(void){
-    sleepAmount = 1000;
-    packetCount = 0;
-    mission_begin();
-    // TODO: write csv header to sd card
-}
-
-void display_incoming_data(String data){
-}
-
-String* string_to_array(String data){
-    int dataCount = 1;
-    for (unsigned int i = 0; i < data.length(); i++){
-        if (data[i] == separator){
-            dataCount++;
-        }
-    }
-
-    String* resultArray = new String[dataCount];
-
-    // Use strtok to split the input string at commas
-    char* token = strtok(const_cast<char*>(data.c_str()), ",");
-    int index = 0;
-
-    // Loop through the tokens and store them in the array
-    while (token != NULL) {
-    resultArray[index++] = String(token);
-    token = strtok(NULL, ",");
-    }
-
-    return resultArray;
-}
-
-void set_sleep_amount(void){
-    uint16_t transmissionTime = (transmissionSize / commsBaudRate) * 1000;
-    sleepAmount = (transmissionTime/percentActive)*(100-percentActive);
-}
-
-String get_checksum(String data){
-    unsigned int checksum = CRC32::calculate(data.c_str(), data.length());
-    char checksumStr[3];
-    snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
-    return String(checksumStr);
-}
-
-bool checksum_invalid(String data){
-    String checksum = data.substring(data.indexOf(checksumIdentifier));
-    if (get_checksum(data)==checksum){
-        return false;
-    } else {
-        return true;
-    }
-}
-
-// FLIGHT CONTROLLER
-float previousAltitude=0;
-uint32_t lastSampleTime=0;
-float vertical_speed(void){
-    float currentAltitude;
-    if (bme.begin(bmeAddress)){
-        currentAltitude = bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
-    } else {
-        currentAltitude = 0;
-    }
-    float verticalSpeed = (currentAltitude-previousAltitude)/(millis()-lastSampleTime);
-    lastSampleTime = millis();
-    return verticalSpeed;
-}
-
-float barometric_altitude(void){
-    if (bme.begin(bmeAddress)){
-        return bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
-    } else {
-        return -1;
-    }
-}
-
+///////////////////////////////////////////////////////////////////////////////////
+// ~DESCENT CONTROL
 
 void descent_guidance(void){
     while (vertical_speed()<guidanceVSpeedThreshold && barometric_altitude()>guidanceAltitudeThreshold);
@@ -596,6 +560,32 @@ void descent_guidance(void){
     }
     threads.yield();
 }
+
+
+// FLIGHT CONTROLLER
+float previousAltitude=0;
+uint32_t lastSampleTime=0;
+float vertical_speed(void){
+    float currentAltitude;
+    if (bme.begin(bmeAddress)){
+        currentAltitude = bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
+    } else {
+        currentAltitude = 0;
+    }
+    float verticalSpeed = (currentAltitude-previousAltitude)/(millis()-lastSampleTime);
+    lastSampleTime = millis();
+    return verticalSpeed;
+}
+
+float barometric_altitude(void){
+    if (bme.begin(bmeAddress)){
+        return bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
+    } else {
+        return -1;
+    }
+}
+
+
 
 void setup(){
     serial_begin();
