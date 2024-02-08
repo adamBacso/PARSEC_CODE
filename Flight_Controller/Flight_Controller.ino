@@ -17,56 +17,71 @@
 // SERIAL COMMS  
 // LORA RADIO // USB SERIAL - **Serial** through USB port
 #define COMMS_SERIAL    Serial2
-
-int commsBaudRate = 115200;
 // GPS
 #define GPS_SERIAL      Serial1
 
-// PINS
+// GUIDANCE THRESHOLDS
+int guidanceAltitudeThreshold = 0; // m
+int guidanceVSpeedThreshold = -2; // m/s
+int thresholdDistanceToTarget = 10; // m
+int courseDeviationThreshold = 0.5; // in degrees
+float drumRadius = 1.1; // in cm
+float maxPullLength = 4; // in cm
+float targetLatitude;
+float targetLongitude;
+
+// SERVO
+int servoPin = 4;
+int servoCurrentPosition = 0;
+float servoSpeed = 0.54;
+int servoSpeedRatio = 1;
+int servoNeutral = 93;
+int clockwise = 67;
+int counterclockwise = 120;
+
+// RADIO
+int commsBaudRate = 115200;
+float percentActive = 10;
+int radioFrequency = 868000000;
+int syncWord;
+int bandwidth;
+// _telemetry
+const String telemetryPreamble = "radio_rx ";
+const String commandPreamble = "CMD";
+const char separator = ',';
+const char checksumIdentifier = '*';
+
+// SENSORS
+Adafruit_BME280 bme; int bmeAddress = 0x76;
+const double SEA_LEVEL_PRESSURE_HPA = (1013.25);
+Adafruit_MPU6050 mpu; int mpuAddress = 0x68;
+TinyGPSPlus gps; int gpsBaud = 9600;
+
+// SD CARD
 uint8_t chipSelect = 10U;
-Sd2Card card;
-SdVolume volume;
-SdFile flightLog;
+File flightLog;
 const char* logName = "flightLog.txt";
 
-int get_chipSelect(){
+///////////////////////////////////////////////////////////////////////////////////
+
+int get_chipSelect(void){
     return chipSelect;
 }
 
 void sd_begin(void){
-    Serial.print("\nInitializing SD card...");
+    Serial.print("Initializing SD card...");
     pinMode(chipSelect,OUTPUT);
 
-
-    // we'll use the initialization code from the utility libraries
-    // since we're just testing if the card is working!
-    if (!card.init(SPI_HALF_SPEED, chipSelect)) {
-    Serial.println("initialization failed. Things to check:");
-    Serial.println("* is a card inserted?");
-    Serial.println("* is your wiring correct?");
-    Serial.println("* did you change the chipSelect pin to match your shield or module?");
-    return;
-    } else {
-    Serial.println("Wiring is correct and a card is present.");
+    // see if the card is present and can be initialized:
+    if (!SD.begin(chipSelect)) {
+        Serial.println("Card failed, or not present");
+        while (1) {
+            // No SD card, so don't do anything more - stay stuck here
+        }
     }
-
-    // print the type of card
-    Serial.print("\nCard type: ");
-    switch(card.type()) {
-    case SD_CARD_TYPE_SD1:
-        Serial.println("SD1");
-        break;
-    case SD_CARD_TYPE_SD2:
-        Serial.println("SD2");
-        break;
-    case SD_CARD_TYPE_SDHC:
-        Serial.println("SDHC");
-        break;
-    default:
-        Serial.println("Unknown");
-    }
+    Serial.println("card initialized.");
 }
-/*
+
 void sd_write(String data){
     if (SD.begin(chipSelect)){
         flightLog = SD.open(logName, FILE_WRITE);
@@ -76,11 +91,6 @@ void sd_write(String data){
         flightLog.close();
     }
 }
-*/
-int resolution = 1024;
-
-TinyGPSPlus gps;
-int gpsBaud = 9600;
 
 const char *gpsStream =
     "$GPRMC,045103.000,A,3014.1984,N,09749.2872,W,0.67,161.46,030913,,,A*7C\r\n"
@@ -101,6 +111,18 @@ void feed_gps(){
     */
 }
 
+double distance_to_target(void){
+    return gps.distanceBetween(gps.location.lat(),gps.location.lng(),targetLatitude,targetLongitude);
+}
+
+void set_target(double latitude, double longitude){
+    targetLatitude = latitude;
+    targetLongitude = longitude;
+}
+
+double course_to_target(void){
+    return gps.courseTo(gps.location.lat(),gps.location.lng(),targetLatitude,targetLongitude);
+}
 
 void led_begin(void){
     pinMode(LED_BUILTIN,OUTPUT);
@@ -155,11 +177,6 @@ void true_sleep(int milli){
     processStart = millis();
 }
 
-
-int radioFrequency = 868000000;
-int syncWord;
-int bandwidth;
-
 bool is_comms_available(void){
     return COMMS_SERIAL;
 }
@@ -177,16 +194,10 @@ void stop_reception(void){
 }
 
 uint32_t broadcastStartTime = 0;
-bool inFlight = false;
+bool inFlight = true;
 
 int packetCount = 0;
-const char separator = ',';
-const char checksumIdentifier = '*';
 
-const String telemetryPreamble = "radio_rx ";
-const String commandPreamble = "CMD";
-const String csvHeader = "packet count,mission time,internal temperature,barometric altitude,external temperature (bme280),humidity,gps age,latitude,longitude,gps altitude,acceleration (x),acceleration (y),acceleration (z),inclination (x),inclination (y),inclination (z),external temperature (mpu6050),,uptime,sleep amount,checksum";
-const String* headerArray = string_to_array(csvHeader);
 /*
 int index = 0;
 int indexPacketCount = index++;
@@ -211,16 +222,12 @@ int indexSleepAmount = index++;
 int indexChecksum = index++;
 */
 
-float percentActive = 10;
 float sleepAmount;
 
 String printBuffer = "";
 float transmissionSize;
 
-Adafruit_BME280 bme; int bmeAddress = 0x76;
-Adafruit_MPU6050 mpu; int mpuAddress = 0x68;
 
-const double SEA_LEVEL_PRESSURE_HPA = (1013.25); // FIXME: replace by value true locally
 
 void prints(String data){
     String dataBlock = data + separator;
@@ -257,13 +264,14 @@ void handle_data(void){
     flash();
     while (true){
         elapsedTime = millis()-broadcastStartTime;
-        broadcastStartTime = millis();
-        telemetry_send();
-        //set_sleep_amount();
-        flash();
-        //threads.delay(250);
-        delay(100);
-        feed_gps();
+        if (elapsedTime >= broadcastStartTime + sleepAmount){
+            broadcastStartTime = millis();
+            telemetry_send();
+            set_sleep_amount();
+            flash();
+            //delay(100);
+            feed_gps();
+        }
         //threads.yield();
     }
 }
@@ -276,10 +284,11 @@ void handle_incoming_data(void){
     }
 }
 
+
 void telemetry_send(void){
     while (!(COMMS_SERIAL.availableForWrite()>0)){
         //threads.delay(1);
-        delay(10);
+        delay(1);
     }
     transmissionSize = 0;
     printBuffer = "";
@@ -295,10 +304,18 @@ void telemetry_send(void){
         prints(String(gps.location.age()));                                 // gps age
         prints(String(gps.location.lat()));                                 // latitude
         prints(String(gps.location.lng()));                                 // longitude
+        prints(String(course_to_target()));                                 // course to target
+        prints(String(distance_to_target()));                               // distance to target
     }else{
-        for (int i = 0; i<3; i++){
+        for (int i = 0; i<5; i++){
             prints("#");
         }
+    }
+
+    if (gps.course.isValid()){
+        prints(String(gps.course.deg()));                                   // current course
+    }else{
+        prints("#");
     }
 
     if (gps.altitude.isValid()){
@@ -306,11 +323,11 @@ void telemetry_send(void){
     }else{
         prints("#");
     }
-
+    
     // BME280
     if (bme.begin(bmeAddress)){
         prints(String(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)));           // altitude
-        prints(String(get_vertical_speed()));                               // vertical speed
+        prints(String(vertical_speed()));                               // vertical speed
         prints(String(bme.readTemperature()));                              // temperature
         prints(String(bme.readHumidity()));                                 // humidity
     }else{
@@ -349,6 +366,7 @@ void telemetry_send(void){
     transmissionSize *= 8;
     COMMS_SERIAL.println("radio tx " + string_to_hex(printBuffer) + " 1");
     Serial.println(printBuffer);
+    sd_write(printBuffer);
 }
 
 void delegate_incoming_telemetry(void){
@@ -398,43 +416,37 @@ __syntax__: CMDxxx,123,123,... => COMMAND-CODE_ARG1_ARG2_...
 
 */
 
-int servoPin = 4;
-int servoCurrentPosition = 0;
-int servoSpeed = 45;
-int servoSpeedRatio = 1;
-int clockwise = -1;
-int servoNeutral = 93;
 
 
 void servo_stop(void){
     analogWrite(servoPin,servoNeutral);
 }
 
-void servo_clockwise(int speed = 67){
-    analogWrite(servoPin,speed);
-}
-
-void servo_counterclockwise(int speed = 120){
-    analogWrite(servoPin,speed);
+void rotate_servo(int angle){
+    if (angle > 0){
+        analogWrite(servoPin,counterclockwise);
+    }else {
+        analogWrite(servoPin,clockwise);
+    }
 }
 
 void set_servo_position(int position){
-    //Serial.println("currentPosition: "+servoCurrentPosition);
-    //Serial.println("setting position to: "+position);
-    /*
-    if (position>servoCurrentPosition){
-        servo_clockwise();
-    } else if (position<servoCurrentPosition){
-        servo_counterclockwise();
+    if (abs(servoCurrentPosition) < 360){
+        int amountToRotate = position - servoCurrentPosition;
+        Serial.println(amountToRotate);
+        rotate_servo(amountToRotate);
+        float servoSleep = amountToRotate / servoSpeed;
+        Serial.println(servoSleep);
+        threads.delay(servoSleep);
+        servo_stop();
     }
-    */
-    //threads.sleep((abs(position-servoCurrentPosition)/(servoSpeed*servoSpeedRatio)));
-    servo_clockwise(position);
-    //threads.delay(1000);
-    delay(1000);
-    servo_stop();
-    //threads.yield();
+    threads.yield();
 }
+
+void pull_line_amount(float lineLength){
+    set_servo_position(lineLength/drumRadius);
+}
+
 void handle_command(String command){
     //Serial.println("command:"+command);
     switch (command.substring(0,3).toInt()){
@@ -445,15 +457,38 @@ void handle_command(String command){
     }
     
 }
+
 void servo_begin(void){
+    Serial.println("servo_begin");
     analogWriteFrequency(servoPin,240);
     servo_stop();
+    servoCurrentPosition = 0;
+}
+
+void servo_reset(){
+    set_servo_position(0);
+}
+
+void servo_test(int iterations = 1){
+    for (int i = 0; i<iterations; i++){
+        set_servo_position(20);
+        delay(1000);
+        set_servo_position(-40);
+        delay(1000);
+        pull_line_amount(2);
+        delay(1000);
+        servo_reset();
+        delay(1000);
+        pull_line_amount(-3);
+        delay(1000);
+        servo_reset();
+        delay(2000);
+    }
 }
 
 void serial_begin(void){
     COMMS_SERIAL.begin(commsBaudRate);
-    //Serial.begin(9600);
-    //while (!Serial){}
+    Serial.begin(9600);
     GPS_SERIAL.begin(gpsBaud);
 }
 
@@ -514,7 +549,7 @@ bool checksum_invalid(String data){
 // FLIGHT CONTROLLER
 float previousAltitude=0;
 uint32_t lastSampleTime=0;
-float get_vertical_speed(void){
+float vertical_speed(void){
     float currentAltitude;
     if (bme.begin(bmeAddress)){
         currentAltitude = bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
@@ -526,26 +561,60 @@ float get_vertical_speed(void){
     return verticalSpeed;
 }
 
-void control(void){
-    
+float barometric_altitude(void){
+    if (bme.begin(bmeAddress)){
+        return bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
+    } else {
+        return -1;
+    }
+}
+
+
+void descent_guidance(void){
+    while (vertical_speed()<guidanceVSpeedThreshold && barometric_altitude()>guidanceAltitudeThreshold);
+
+    bool guidanceNeeded = true;
+    while (guidanceNeeded){
+        if (gps.location.isValid()){
+            if (gps.distanceBetween(gps.location.lat(),gps.location.lng(),targetLatitude,targetLongitude)>thresholdDistanceToTarget){
+                int32_t courseDeviation = course_to_target()-gps.course.value();
+                if (abs(courseDeviation) > courseDeviationThreshold){
+                    if (courseDeviation > 0){
+                        pull_line_amount(maxPullLength);
+                    } else {
+                        pull_line_amount(-maxPullLength);
+                    }
+                } else {
+                    servo_reset();
+                }
+            } else {
+                pull_line_amount(maxPullLength);
+                guidanceNeeded = false;
+            }
+        }
+        threads.yield();
+    }
+    threads.yield();
 }
 
 void setup(){
     serial_begin();
     telemetry_begin();
-    //sd_begin();
     led_begin();
+    sd_begin();
     servo_begin();
+    Serial.println("servo_init_done");
     flash();
     if (inFlight){
         //threads.addThread(handle_data);
-        handle_data();
+        //handle_data();
+        threads.addThread(descent_guidance);
     } else {
         receive();
-        //threads.addThread(handle_incoming_data);
         handle_incoming_data();
     }
 }
 
 void loop(){
+    telemetry_send();
 }

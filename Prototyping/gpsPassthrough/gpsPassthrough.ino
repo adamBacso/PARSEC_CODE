@@ -1,12 +1,14 @@
 void setup(){
     Serial.begin(9600);
     while (!Serial){}
-    Serial2.begin(9600);
-    while (!Serial2){}
+    Serial1.begin(9600);
+    while (!Serial1){}
+    pinMode(LED_BUILTIN,OUTPUT);
+    digitalWrite(LED_BUILTIN,LOW);
 }
 
 void loop(){
-    if (Serial2.available()>0){
-        Serial.print(Serial2.read());
+    if (Serial1.available()){
+        Serial.println(Serial2.read());
     }
 }

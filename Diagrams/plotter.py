@@ -7,8 +7,12 @@ internalTemperature = []
 gpsAge = []
 gpsLatitude = []
 gpsLongitude = []
+courseToTarget = []
+distanceToTarget = []
+currentCourse = []
 gpsAltitude = []
 barometricAltitude = []
+verticalSpeed = []
 bmeTemperature = []
 humidity = []
 accelerationX = []
@@ -19,10 +23,17 @@ gyroscopeY = []
 gyroscopeZ = []
 mpuTemperature = []
 
+telemetryPreamble = "radio_rx "
 
 def readFile(fileName):
     f = open(fileName, "rt")
+
     for line in f:
+
+        if line.startswith(telemetryPreamble):
+            line = line[len(line)]
+            line = bytes.fromhex(line).decode('utf-8')
+
         lineArray = line.split(",")
         index = 0
         packetID.append(lineArray[index])
@@ -37,9 +48,17 @@ def readFile(fileName):
         index += 1
         gpsLongitude.append(lineArray[index])
         index += 1
+        courseToTarget.append(lineArray[index])
+        index += 1
+        distanceToTarget.append(lineArray[index])
+        index += 1
+        currentCourse.append(lineArray[index])
+        index += 1
         gpsAltitude.append(lineArray[index])
         index += 1
         barometricAltitude.append(lineArray[index])
+        index += 1
+        verticalSpeed.append(lineArray[index])
         index += 1
         bmeTemperature.append(lineArray[index])
         index += 1
@@ -61,7 +80,7 @@ def readFile(fileName):
         index += 1
     f.close()
 
-def draw_plot(y, x = [], formatting = "o-"):
+def draw_plot(y, x = [], formatting = "o-", label = ""):
     if x == []:
         for i in range(len(y)):
             x.append(i)
@@ -85,19 +104,26 @@ def draw_plot(y, x = [], formatting = "o-"):
                 del y[i]
                 del x[i]
 
-        plt.plot(x,y,formatting)
+        plt.plot(x,y,formatting, label=label, markersize=3)
 
 def show_plot(title = ""):
+    plt.legend()
     plt.title(title)
     plt.show()
+readFile("Logging/on-board data/flight3.txt")
 
-readFile("Diagrams/test.txt")
-draw_plot(accelerationX,time)
-draw_plot(accelerationY,time)
-draw_plot(accelerationZ,time)
+draw_plot(barometricAltitude,time,label="Altitude (BME)")
+show_plot("Altitude - time")
+
+draw_plot(verticalSpeed,time,label="Vertical Speed")
+show_plot("VSpeed - time")
+
+draw_plot(accelerationX,time, label="Acceleration X")
+draw_plot(accelerationY,time, label="Acceleration Y")
+draw_plot(accelerationZ,time, label="Acceleration Z")
 show_plot("Acceleration - time graph")
 
-draw_plot(gyroscopeX,time)
-draw_plot(gyroscopeY,time)
-draw_plot(gyroscopeZ,time)
+draw_plot(gyroscopeX,time, label="Rotation X")
+draw_plot(gyroscopeY,time, label="Rotation Y")
+draw_plot(gyroscopeZ,time, label="Rotation Z")
 show_plot("Rotation - time graph")

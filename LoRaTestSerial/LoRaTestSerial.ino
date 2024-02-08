@@ -5,9 +5,7 @@
 
 
 void setup(){
-    COMMS_SERIAL.begin(115200);
-    while (!COMMS_SERIAL){
-    }
+    COMMS_SERIAL.begin(9600);
     Serial.begin(9600);
 }
 
