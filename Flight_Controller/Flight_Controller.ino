@@ -1,7 +1,7 @@
 #include <PWMServo.h>
 #include <Wire.h>
-#include <SPI.h>
 #include <SD.h>
+#include <SPI.h>
 #include <CRC32.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
@@ -107,24 +107,27 @@ void sd_begin(void){
         Serial.println("Card failed, or not present");
         while (1) {
             // No SD card, so don't do anything more - stay stuck here
+            digitalWrite(LED_BUILTIN,HIGH);
         }
+    } else {
+        Serial.println("card initialized.");
     }
-    Serial.println("card initialized.");
 
-    bool fileUnique = false;
+    while (!Serial);
     int fileIndex = 1;
-    while (!fileUnique){
-        
+    while (1){
         String nameToCheck = logName+fileIndex+logType;
+        Serial.println("checking for file with the name of: "+nameToCheck);
         if (SD.exists((nameToCheck).c_str())){
             Serial.println(nameToCheck + " already exists!");
             fileIndex++;
         } else {
             logName = logName+fileIndex+logType;
-            fileUnique = true;
+            Serial.println("file created with the name of:"+logName);
+            break;
         }
-
     }
+    Serial.println("Name finding loop officially ended.");
 }
 
 void sd_write(String data){
@@ -181,7 +184,7 @@ void led_begin(void){
 
 void flash(){
     digitalWrite(LED_BUILTIN,HIGH);
-    delay(25);
+    delay(100);
     digitalWrite(LED_BUILTIN,LOW);
 }
 
@@ -442,9 +445,11 @@ __syntax__: CMDxxx123,123,... => COMMAND-CODEARG1,ARG2,...
 2xx - SENSORS
 
 3xx - CONTROL
-    310 - zero servo
-    320 - set servo position to <position>
-    321 - set servo position to <position> under <time> ms
+    310 - zero servo (CMD310)
+    320 - set servo position to <position> (CMD320<position>)
+    
+    330 - set target location to current location (CMD330)
+    331 - set target location (CMD331<latitude>,<longitude>)
 */
 
 void handle_command(String command){
@@ -585,13 +590,12 @@ float barometric_altitude(void){
     }
 }
 
-
-
 void setup(){
     serial_begin();
     telemetry_begin();
-    led_begin();
     sd_begin();
+    led_begin();
+    /*
     servo_begin();
     Serial.println("servo_init_done");
     flash();
@@ -602,9 +606,11 @@ void setup(){
     } else {
         receive();
         handle_incoming_data();
-    }
+    }*/
 }
 
 void loop(){
-    telemetry_send();
+    flash();
+    delay(975);
+    Serial.println("Flash!");
 }
