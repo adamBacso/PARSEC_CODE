@@ -564,7 +564,7 @@ __syntax__: CMDxxx123,123,... => COMMAND-CODEARG1,ARG2,...
 
 void handle_command(String command){
     int commandCodeLength = 3;
-    switch (command.substring(0,commandCodeLength).toInt()){
+    switch ((int)command.substring(0,commandCodeLength).toInt()){
         case (000):
             go = true;
             break;
