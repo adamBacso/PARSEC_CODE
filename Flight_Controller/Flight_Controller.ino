@@ -694,6 +694,7 @@ void set_counterclockwise(int speed){
 // ~DESCENT CONTROL
 
 void guidance_begin(void){
+    zero_altitude();
     Serial.println("Guidance info:");
     Serial.println((String)"\tTarget latitude: "+targetLatitude);
     Serial.println((String)"\tTarget longitude: "+targetLongitude);
