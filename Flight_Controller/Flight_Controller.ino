@@ -125,7 +125,9 @@ void send_request(String command){
 }
 
 void send(String data){
-    COMMS_SERIAL.println("radio tx "+string_to_hex(data)+" 1");
+    if (COMMS_SERIAL.availableForWrite()){
+        COMMS_SERIAL.println("radio tx "+string_to_hex(data)+" 1");
+    }
 }
 
 void receive(void){
@@ -161,6 +163,12 @@ void get_radio_info(){
     Serial.println("\tSpreading Factor: "+spreadingFactor);
     Serial.println((String)"\tChirp rate: "+chirpRate);
     Serial.println("Radio: OK");
+    send("\tRemote_Frequency: "+radioFrequency);
+    send("\tRemote_Bandwidth: "+radioBandwidth);
+    send("\tRemote_Sync word: "+syncWord);
+    send("\tRemote_Spreading Factor: "+spreadingFactor);
+    send((String)"\tRemote_Chirp rate: "+chirpRate);
+    send("Remote_Radio: OK");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -209,19 +217,22 @@ void sd_write(String data){
 void set_target(double latitude, double longitude){
     targetLatitude = latitude;
     targetLongitude = longitude;
-    send((String)"newTarget_OK:"+targetLatitude+","+targetLongitude);
+    Serial.println((String)"newTarget_OK:"+targetLatitude+","+targetLongitude);
+    send((String)"Remote_newTarget_OK:"+targetLatitude+","+targetLongitude);
 }
 
 void gps_begin(void){
     Serial.print("GPS initializing");
     while (!gps.location.isUpdated()){
         Serial.print(".");
+        send("waiting for gps...");
     } Serial.println();
     Serial.println("GPS info:");
     Serial.println((String)"\tCurrent latitude: "+gps.location.lat());
     Serial.println((String)"\tCurrent longitude: "+gps.location.lng());
     Serial.println((String)"\tCurrent GPS altitude: "+gps.altitude.meters());
     Serial.println("GPS: OK");
+    send("Remote_GPS: OK");
 }
 
 const char *gpsStream =
@@ -324,6 +335,7 @@ void telemetry_begin(void){
     packetCount = 0;
     mission_begin();
     Serial.println("Telemetry: OK");
+    send("Telemetry: OK");
 }
 
 void prints(String data){
@@ -358,18 +370,20 @@ String hex_to_string(String hexString){
 }
 
 uint32_t elapsedTime;
-void handle_data(void){
+void broadcast_data(void){
     flash();
-    elapsedTime = millis()-broadcastStartTime;
-    if (elapsedTime >= broadcastStartTime + sleepAmount){
-        broadcastStartTime = millis();
-        telemetry_send();
-        set_sleep_amount();
-        flash();
-        //delay(100);
-        feed_gps();
+    while (1){
+        elapsedTime = millis()-broadcastStartTime;
+        if (elapsedTime >= broadcastStartTime + sleepAmount){
+            broadcastStartTime = millis();
+            telemetry_send();
+            set_sleep_amount();
+            flash();
+            //delay(100);
+            feed_gps();
+        }
+        threads.yield();
     }
-    threads.yield();
 }
 
 void set_sleep_amount(void){
@@ -422,7 +436,7 @@ void telemetry_send(void){
     
     // BME280
     if (bme.begin(bmeAddress)){
-        prints(String(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)-zeroAltitude));           // altitude
+        prints(String(read_altitude()));                                    // altitude
         prints(String(bme.readTemperature()));                              // temperature
         prints(String(bme.readHumidity()));                                 // humidity
     }else{
@@ -522,7 +536,16 @@ void display_incoming_data(String data){
 
 /*
 __syntax__: CMDxxx123,123,... => COMMAND-CODEARG1,ARG2,...
+000 - flight ready mode
+
 1xx - RADIO
+    100 - set frequency
+    101 - set sync word
+    102 - set bandidth
+    103 - set spreading factor
+    104 - set chirp rate
+
+    110 - set percent active
 
 2xx - SENSORS
 
@@ -532,13 +555,20 @@ __syntax__: CMDxxx123,123,... => COMMAND-CODEARG1,ARG2,...
     
     330 - set target location to current location (CMD330)
     331 - set target location (CMD331<latitude>,<longitude>)
+
+    340 - zero altitude at current altitude
+
+    350 - set guidance altitude threshold
+    351 - set guidance vertical speed threshold
 */
 
 void handle_command(String command){
     int commandCodeLength = 3;
     switch (command.substring(0,commandCodeLength).toInt()){
+        case (000):
+            go = true;
+            break;
         case (320):
-            //Serial.println("trying to rotate");
             set_servo_position((int)command.substring(commandCodeLength).toInt());
             break;
         case (330):
@@ -546,7 +576,16 @@ void handle_command(String command){
             break;
         case (331):
             int separatorIndex = command.substring(3).indexOf(",");
-            set_target(command.substring(commandCodeLength+1,separatorIndex).toFloat(),command.substring(separatorIndex+1).toFloat());
+            set_target(command.substring(commandCodeLength,separatorIndex).toFloat(),command.substring(separatorIndex+1).toFloat());
+            break;
+        case (340):
+            zero_altitude();
+            break;
+        case (350):
+            set_guidance_altitude_threshold(command.substring(commandCodeLength).toFloat());
+            break;
+        case (351):
+            set_guidance_vspeed_threshold(command.substring(commandCodeLength).toFloat());
             break;
         default:
             break;
@@ -557,12 +596,9 @@ void capture_command(void){
     if (Serial.available()){
         String command = Serial.readString();
         if (command.startsWith(commandPreamble)){
-            switch ((int)command.substring(3,6).toInt()){
-                default:
-                    break;
-            }
             send(command);
             Serial.println(command+" sent!");
+            handle_command(command.substring(3));
         }
     }
 }
@@ -605,7 +641,7 @@ void set_servo_position(int position){
 }
 
 void pull_line_amount(float lineLength){
-    set_servo_position(lineLength/drumRadius);
+    set_servo_position(lineLength/drumRadius*PI);
 }
 
 
@@ -620,9 +656,11 @@ void servo_begin(void){
     Serial.println("Servo: OK");
 }
 
+// define current rotation as ZERO
 void servo_zero(void){
     servoCurrentPosition = 0;
 }
+// rotate servo to last zeroed location
 void servo_reset(){
     set_servo_position(0);
 }
@@ -660,15 +698,32 @@ void guidance_begin(void){
     Serial.println((String)"\tTarget latitude: "+targetLatitude);
     Serial.println((String)"\tTarget longitude: "+targetLongitude);
     if (bme.begin(bmeAddress)){
-        Serial.println((String)"\tCurrent altutude: "+(bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)-zeroAltitude));
+        Serial.println((String)"\tCurrent altutude: "+read_altitude());
     } else {
         Serial.println("\tCurrent altitude: __bmeInitError__");
     }
+    Serial.println("\tGuidance altitude threshold: "+guidanceAltitudeThreshold);
+    Serial.println("\tGuidance vertical speed threshold: "+guidanceVSpeedThreshold);
     Serial.println("Guidance: OK");
 }
 
+void set_guidance_altitude_threshold(float altitude){
+    guidanceAltitudeThreshold = altitude;
+}
+
+void set_guidance_vspeed_threshold(float vspeed){
+    guidanceVSpeedThreshold = vspeed;
+}
+
+void confirmGuidance(void){
+    while (!COMMS_SERIAL.availableForWrite()>0);
+    send("__guidance active__");
+}
+
 void descent_guidance(void){
-    while (vertical_speed()<guidanceVSpeedThreshold && barometric_altitude()>guidanceAltitudeThreshold);
+    while (read_altitude()<guidanceAltitudeThreshold); threads.delay(1000); // ensures that guidance only activates after passing threshold altitude
+    while (vertical_speed()<guidanceVSpeedThreshold);
+    threads.addThread(confirmGuidance);
 
     bool guidanceNeeded = true;
     while (guidanceNeeded){
@@ -688,6 +743,8 @@ void descent_guidance(void){
                 pull_line_amount(maxPullLength);
                 guidanceNeeded = false;
             }
+        } else {
+            servo_reset();
         }
         threads.yield();
     }
@@ -696,33 +753,33 @@ void descent_guidance(void){
 
 
 // FLIGHT CONTROLLER
-float previousAltitude=0;
+double previousAltitude=0;
 uint32_t lastSampleTime=0;
-float vertical_speed(void){
-    float currentAltitude;
-    if (bme.begin(bmeAddress)){
-        currentAltitude = bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
-    } else {
-        currentAltitude = 0;
-    }
-    float verticalSpeed = (currentAltitude-previousAltitude)/(millis()-lastSampleTime);
+double vertical_speed(void){
+    double currentAltitude = read_altitude();
+    double verticalSpeed = (currentAltitude-previousAltitude)/(millis()-lastSampleTime);
     lastSampleTime = millis();
     return verticalSpeed;
 }
 
-float barometric_altitude(void){
+float read_altitude(void){
     if (bme.begin(bmeAddress)){
-        return bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
+        return bme.readAltitude(SEA_LEVEL_PRESSURE_HPA)-zeroAltitude;
     } else {
         return -1;
+    }
+}
+
+void zero_altitude(void){
+    if (bme.begin(bmeAddress)){
+        zeroAltitude = bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
     }
 }
 
 void setup(){
     kacat_init();
     if (inFlight){
-        //threads.addThread(handle_data);
-        //handle_data();
+        threads.addThread(broadcast_data);
         threads.addThread(descent_guidance);
     } else {
         receive();
