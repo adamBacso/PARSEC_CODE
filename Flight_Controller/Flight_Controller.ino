@@ -225,7 +225,7 @@ void gps_begin(void){
     Serial.print("GPS initializing");
     while (!gps.location.isUpdated()){
         Serial.print(".");
-        send("waiting for gps...");
+        send("waiting for gps..."); delay(500);
     } Serial.println();
     Serial.println("GPS info:");
     Serial.println((String)"\tCurrent latitude: "+gps.location.lat());
