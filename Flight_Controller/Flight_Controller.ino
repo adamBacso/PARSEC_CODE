@@ -125,9 +125,9 @@ void send_request(String command){
 }
 
 void send(String data){
-    if (COMMS_SERIAL.availableForWrite()){
-        COMMS_SERIAL.println("radio tx "+string_to_hex(data)+" 1");
-    }
+    while (!COMMS_SERIAL.availableForWrite()){}
+    COMMS_SERIAL.println("radio tx "+string_to_hex(data)+" 1");
+    sd_write(data);
 }
 
 void receive(void){
@@ -401,7 +401,7 @@ void telemetry_send(void){
         delay(1);
     }
     transmissionSize = 0;
-    printBuffer = "";
+    printBuffer = "$";
 
     prints(String(packetCount++));                                          // packet count
     prints(String(get_time()));                                             // current mission time
@@ -722,8 +722,12 @@ void confirmGuidance(void){
 }
 
 void descent_guidance(void){
-    while (read_altitude()<guidanceAltitudeThreshold); threads.delay(1000); // ensures that guidance only activates after passing threshold altitude
-    while (vertical_speed()<guidanceVSpeedThreshold);
+    while (read_altitude()<guidanceAltitudeThreshold){
+        threads.delay(250);
+    } threads.delay(1000); // ensures that guidance only activates after passing threshold altitude
+    while (vertical_speed()>guidanceVSpeedThreshold){
+        threads.delay(250);
+    }
     threads.addThread(confirmGuidance);
 
     bool guidanceNeeded = true;
