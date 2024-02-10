@@ -473,6 +473,7 @@ void telemetry_send(void){
     printBuffer += checksumIdentifier+checksum;
     transmissionSize += sizeof(string_to_hex(printBuffer));
     transmissionSize *= 8;
+    prints(String(transmissionSize));                                       // transmission size
     send(printBuffer);
     Serial.println(printBuffer);
     sd_write(printBuffer);
