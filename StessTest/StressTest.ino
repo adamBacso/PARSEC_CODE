@@ -33,4 +33,5 @@ void loop(){
     
     String concatenatedData = String(temperature, HEX) + "," + String(humidity, HEX) + "," + String(pressure, HEX) + "," + String(ax, HEX) + "," + String(ay, HEX) + "," + String(az, HEX) + "," + String(gx, HEX) + "," + String(gy, HEX) + "," + String(gz, HEX) + "," + String(temp, HEX);
     Serial2.println("radio tx "+concatenatedData+" 1");
+    delay(250);
 }
