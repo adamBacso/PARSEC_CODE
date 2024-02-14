@@ -34,6 +34,7 @@ float maxPullLength = 4; // in cm
 double targetLatitude = 47.4979; // Budapest coordinates
 double targetLongitude = 19.0402;
 float zeroAltitude = 0;
+bool inFlight = true;
 
 // SERVO
 int servoPin = 4;
@@ -340,7 +341,6 @@ void true_sleep(int milli){
 // ~TELEMETRY
 
 uint32_t broadcastStartTime = 0;
-bool inFlight = true;
 
 int packetCount = 0;
 
