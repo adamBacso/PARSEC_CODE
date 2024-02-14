@@ -41,7 +41,7 @@ def show_plot(title = ""):
     plt.title(title)
     plt.show()
 
-def spacial_plot(xData='latitude', yData='longitude', zData='barometricAltitude', xLabel='Latitude', yLabel="Longitude", zLabel='Altitude (BME)'):
+def spacial_plot(xData='latitude', yData='longitude', zData='barometricAltitude', xLabel='Latitude', yLabel="Longitude", zLabel='Altitude (BME)', xTarget=47.4979, yTarget=19.0402):
     x = telemetryData[xData]
     y = telemetryData[yData]
     z = telemetryData[zData]
@@ -76,5 +76,9 @@ draw_plot('gyroscopeX', label="Rotation X")
 draw_plot('gyroscopeY', label="Rotation Y")
 draw_plot('gyroscopeZ', label="Rotation Z")
 show_plot("Rotation - time graph")
+
+draw_plot('courseToTarget', label="Course to target")
+draw_plot('currentCourse', label="Current course")
+show_plot("Current and desired course")
 
 spacial_plot()
