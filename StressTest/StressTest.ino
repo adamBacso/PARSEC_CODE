@@ -14,6 +14,7 @@ void setup(){
     mpu.begin(0x68);
     sgp.begin(&Wire1);
     sgp.selfTest();
+    pinMode(14,INPUT);
 }
 
 void loop(){
@@ -34,7 +35,7 @@ void loop(){
 
     
     String concatenatedData = String(temperature, HEX) + "2c" + String(humidity, HEX) + "2c" + String(pressure, HEX) + "2c" + String(ax, HEX) + "2c" + String(ay, HEX) + "2c" + String(az, HEX) + "2c" + String(gx, HEX) + "2c" + String(gy, HEX) + "2c" + String(gz, HEX) + "2c" + String(temp, HEX);
-    String plainData = String(temperature) + "," + String(humidity) + "," + String(pressure) + "," + String(ax) + "," + String(ay) + "," + String(az) + "," + String(gx) + "," + String(gy) + "," + String(gz) + "," + String(temp) + "," + String(vocIndex);
-    Serial.println("radio tx "+plainData+" 1");
+    String plainData = String(temperature) + "," + String(humidity) + "," + String(pressure) + "," + String(ax) + "," + String(ay) + "," + String(az) + "," + String(gx) + "," + String(gy) + "," + String(gz) + "," + String(temp) + "," + String(vocIndex)+","+String(tempmonGetTemp());
+    Serial.println((String)"radio tx "+plainData+(String)" 1");
     delay(250);
 }

@@ -50,7 +50,7 @@ int counterclockwise = 120;
 int commsBaudRate = 115200;
 float percentActive = 10;
 int radioFrequency = 868000000; // in Hz
-int syncWord = 12;
+int syncWord = 34;
 int radioBandwidth = 125;
 int spreadingFactor = 7;
 float chirpRate = 4.0/5.0;
@@ -93,6 +93,7 @@ void kacat_init(void){
     threads.addThread(feed_gps);
     Serial.println("####__KACAT_INIT__####");
     telemetry_begin();
+
     get_radio_info();
     sd_begin();
     servo_begin();
@@ -147,36 +148,46 @@ void stop_reception(void){
 }
 
 void get_radio_info(){
+    COMMS_SERIAL.clear();
     COMMS_SERIAL.println("radio get freq");
-    while (!(COMMS_SERIAL.available()>0));
-    radioFrequency = COMMS_SERIAL.readString().toInt();
+    while ((COMMS_SERIAL.available()<=0));
+    String frequencyString = COMMS_SERIAL.readString();
+    Serial.println(frequencyString);
+    radioFrequency = (int)frequencyString.toInt();
     COMMS_SERIAL.println("radio get bw");
     while (!(COMMS_SERIAL.available()>0));
-    radioBandwidth = COMMS_SERIAL.readString().toInt();
+    String bwString = COMMS_SERIAL.readString();
+    radioBandwidth = (int)bwString.toInt();
     COMMS_SERIAL.println("radio get sync");
     while (!(COMMS_SERIAL.available()>0));
-    syncWord = COMMS_SERIAL.readString().toInt();
+    syncWord = (int)COMMS_SERIAL.readString().toInt();
     COMMS_SERIAL.println("radio get sf");
     while (!(COMMS_SERIAL.available()>0));
-    spreadingFactor = COMMS_SERIAL.readString().toInt();
+    spreadingFactor = (int)COMMS_SERIAL.readString().toInt();
     COMMS_SERIAL.println("radio get cr");
     while (!(COMMS_SERIAL.available()>0));
     String rawCR = COMMS_SERIAL.readString();
-    chirpRate = rawCR[1] / rawCR[2];
+    chirpRate = rawCR[0] / rawCR[2];
 
     Serial.println("Radio info:");
-    Serial.println("\tFrequency: "+radioFrequency);
-    Serial.println("\tBandwidth: "+radioBandwidth);
-    Serial.println("\tSync word: "+syncWord);
-    Serial.println("\tSpreading Factor: "+spreadingFactor);
+    Serial.println((String)"\tFrequency: "+radioFrequency);
+    Serial.println((String)"\tBandwidth: "+radioBandwidth);
+    Serial.println((String)"\tSync word: "+syncWord);
+    Serial.println((String)"\tSpreading Factor: "+spreadingFactor);
     Serial.println((String)"\tChirp rate: "+chirpRate);
     Serial.println("Radio: OK");
-    send("$\tRemote_Frequency: "+radioFrequency);
-    send("$\tRemote_Bandwidth: "+radioBandwidth);
-    send("$\tRemote_Sync word: "+syncWord);
-    send("$\tRemote_Spreading Factor: "+spreadingFactor);
+    send((String)"$\tRemote_Frequency: "+radioFrequency);
+    send((String)"$\tRemote_Bandwidth: "+radioBandwidth);
+    send((String)"$\tRemote_Sync word: "+syncWord);
+    send((String)"$\tRemote_Spreading Factor: "+spreadingFactor);
     send((String)"$\tRemote_Chirp rate: "+chirpRate);
     send("$Remote_Radio: OK");
+}
+
+void radio_begin(void){
+    stop_reception();
+    while (COMMS_SERIAL.available()<=0);
+    COMMS_SERIAL.clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -199,16 +210,13 @@ void sd_begin(void){
     }
 
     int fileIndex = 1;
-    while (1){
-        String nameToCheck = logName+fileIndex+logType;
-        if (SD.exists((nameToCheck).c_str())){
-            fileIndex++;
-        } else {
-            logName = nameToCheck;
-            Serial.println("\tFile Name: "+logName);
-            break;
-        }
+    while (SD.exists((logName+fileIndex+logType).c_str())){
+        fileIndex++;
     }
+    logName = logName+fileIndex+logType;
+    Serial.println((String)"\tFile Name: "+logName);
+    sd_write("");
+
 }
 
 void sd_write(String data){
@@ -584,6 +592,11 @@ __syntax__: CMDxxx123,123,... => COMMAND-CODEARG1,ARG2,...
     110 - set percent active (CMD110<percentActive>)
 
 2xx - SENSORS
+    210 - bme available
+    211 - bme temperature
+    212 - bme humidity
+    213 - bme pressure
+    214 - bme altitude
 
 3xx - CONTROL
     310 - zero servo (CMD310)
@@ -637,6 +650,14 @@ void handle_command(String command){
         }
         case 110: { // set percent active
             percentActive = commandArgs.toFloat();
+            break;
+        }
+        case 210: {
+            Serial.println((String)"BME280 available: "+bme.begin(bmeAddress));
+            break;
+        }
+        case 211: {
+            Serial.println((String)"BME temperature: "+bme.readTemperature());
             break;
         }
         case 320: { // set servo position
@@ -742,11 +763,11 @@ void pull_line_amount(float lineLength){
 void servo_begin(void){
     analogWriteFrequency(servoPin,servoFrequency);
     servo_stop();
-    servo_reset();
     servo_zero();
+    servo_reset();
     Serial.println("Servo:");
-    Serial.println("\tClockwise speed: "+clockwise);
-    Serial.println("\tCounterclockwise speed: "+counterclockwise);
+    Serial.println((String)"\tClockwise speed: "+clockwise);
+    Serial.println((String)"\tCounterclockwise speed: "+counterclockwise);
     Serial.println("Servo: OK");
 }
 
@@ -783,6 +804,7 @@ void guidance_begin(void){
     Serial.println("Guidance info:");
     Serial.println((String)"\tTarget latitude: "+targetLatitude);
     Serial.println((String)"\tTarget longitude: "+targetLongitude);
+    Serial.println(bme.begin(bmeAddress));
     if (bme.begin(bmeAddress)){
         Serial.println((String)"\tCurrent altutude: "+read_altitude());
     } else {
@@ -868,9 +890,9 @@ void zero_altitude(void){
 
 void setup(){
     kacat_init();
-    if (inFlight){
+    if (inFlight){/*
         threads.addThread(broadcast_data);
-        threads.addThread(servo_test);
+        threads.addThread(servo_test);*/
     } else {
         receive();
         handle_incoming_data();
@@ -878,4 +900,5 @@ void setup(){
 }
 
 void loop(){
+    telemetry_send();
 }

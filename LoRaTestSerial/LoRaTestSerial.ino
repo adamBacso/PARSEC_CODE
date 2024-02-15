@@ -1,11 +1,11 @@
-#define COMMS_SERIAL    Serial1 
+#define COMMS_SERIAL    Serial2 
 
 // #include <HardwareSerial.h>
 #include <SPI.h>
 
 
 void setup(){
-    COMMS_SERIAL.begin(9600);
+    COMMS_SERIAL.begin(115200);
     Serial.begin(9600);
 }
 
@@ -14,7 +14,6 @@ void loop(){
     // Check if data is available on USB Serial
   while (Serial.available()) {
     String data = Serial.readString();
-    Serial.println(data);
     COMMS_SERIAL.println(data); // Send data to Software Serial
 
     //Serial.flush() //is very slow
