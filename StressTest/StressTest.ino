@@ -1,3 +1,7 @@
+#if defined(__IMXRT1062__)
+extern "C" uint32_t set_arm_clock(uint32_t frequency);
+#endif
+
 #include <Wire.h>
 #include <Adafruit_BME280.h>
 #include <Adafruit_MPU6050.h>
@@ -11,6 +15,11 @@ void setup(){
     Serial2.begin(115200);
     Serial.begin(9600);
     bme.begin(0x76);
+#if defined(__IMXRT1062__)
+    set_arm_clock(24000000);
+    Serial.print("F_CPU_ACTUAL=");
+    Serial.println(F_CPU_ACTUAL);
+#endif
     mpu.begin(0x68);
     sgp.begin(&Wire1);
     sgp.selfTest();
@@ -34,7 +43,7 @@ void loop(){
 
     
     String concatenatedData = String(temperature, HEX) + "2c" + String(humidity, HEX) + "2c" + String(pressure, HEX) + "2c" + String(ax, HEX) + "2c" + String(ay, HEX) + "2c" + String(az, HEX) + "2c" + String(gx, HEX) + "2c" + String(gy, HEX) + "2c" + String(gz, HEX) + "2c" + String(temp, HEX);
-    String plainData = String(temperature) + "," + String(humidity) + "," + String(pressure) + "," + String(ax) + "," + String(ay) + "," + String(az) + "," + String(gx) + "," + String(gy) + "," + String(gz) + "," + String(temp) + "," + String(vocIndex);
+    String plainData = String(temperature) + "," + String(humidity) + "," + String(pressure) + "," + String(ax) + "," + String(ay) + "," + String(az) + "," + String(gx) + "," + String(gy) + "," + String(gz) + "," + String(temp) + "," + String(vocIndex)+","+String(tempmonGetTemp());
     Serial.println("radio tx "+plainData+" 1");
     delay(250);
 }

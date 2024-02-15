@@ -23,6 +23,10 @@
 // GPS
 #define GPS_SERIAL      Serial1
 
+#define bmeAddress      0x76
+#define mpuAddress      0x68
+#define sgpAddress      0x59
+
 // GUIDANCE THRESHOLDS
 volatile bool gpsActive = false;
 int guidanceAltitudeThreshold = 0; // m
@@ -62,10 +66,10 @@ const char separator = ',';
 const char checksumIdentifier = '*';
 
 // SENSORS
-Adafruit_BME280 bme; int bmeAddress = 0x76;
+Adafruit_BME280 bme;
 const double SEA_LEVEL_PRESSURE_HPA = (1013.25);
-Adafruit_MPU6050 mpu; int mpuAddress = 0x68;
-Adafruit_SGP40 sgp; int sgpAddress = 0x59;
+Adafruit_MPU6050 mpu;
+Adafruit_SGP40 sgp;
 TinyGPSPlus gps; int gpsBaud = 9600;
 
 // SD CARD
@@ -83,6 +87,7 @@ const int ledDelay = 25; // in ms
 bool go = false;
 
 void kacat_init(void){
+    servo_lib_test();
     led_begin();
     for (int i = 0; i<10; i++){
         delay(975);
@@ -101,11 +106,13 @@ void kacat_init(void){
     if (Serial){
         while (!go){
             capture_command();
+            delay(250);
         }
         inFlight = true;
     } else {
         while (!go){
             handle_incoming_data();
+            delay(250);
         }
         inFlight = false;
     }
@@ -148,35 +155,35 @@ void stop_reception(void){
 
 void get_radio_info(){
     COMMS_SERIAL.println("radio get freq");
-    while (!(COMMS_SERIAL.available()>0));
+    //while (!(COMMS_SERIAL.available()>0));
     radioFrequency = COMMS_SERIAL.readString().toInt();
     COMMS_SERIAL.println("radio get bw");
-    while (!(COMMS_SERIAL.available()>0));
+    //while (!(COMMS_SERIAL.available()>0));
     radioBandwidth = COMMS_SERIAL.readString().toInt();
     COMMS_SERIAL.println("radio get sync");
-    while (!(COMMS_SERIAL.available()>0));
+    //while (!(COMMS_SERIAL.available()>0));
     syncWord = COMMS_SERIAL.readString().toInt();
     COMMS_SERIAL.println("radio get sf");
-    while (!(COMMS_SERIAL.available()>0));
+    //while (!(COMMS_SERIAL.available()>0));
     spreadingFactor = COMMS_SERIAL.readString().toInt();
     COMMS_SERIAL.println("radio get cr");
-    while (!(COMMS_SERIAL.available()>0));
+    //while (!(COMMS_SERIAL.available()>0));
     String rawCR = COMMS_SERIAL.readString();
     chirpRate = rawCR[1] / rawCR[2];
 
     Serial.println("Radio info:");
-    Serial.println("\tFrequency: "+radioFrequency);
-    Serial.println("\tBandwidth: "+radioBandwidth);
-    Serial.println("\tSync word: "+syncWord);
-    Serial.println("\tSpreading Factor: "+spreadingFactor);
+    Serial.println((String)"\tFrequency: "+radioFrequency);
+    Serial.println((String)"\tBandwidth: "+radioBandwidth);
+    Serial.println((String)"\tSync word: "+syncWord);
+    Serial.println((String)"\tSpreading Factor: "+spreadingFactor);
     Serial.println((String)"\tChirp rate: "+chirpRate);
     Serial.println("Radio: OK");
-    send("$\tRemote_Frequency: "+radioFrequency);
-    send("$\tRemote_Bandwidth: "+radioBandwidth);
-    send("$\tRemote_Sync word: "+syncWord);
-    send("$\tRemote_Spreading Factor: "+spreadingFactor);
+    send((String)"$\tRemote_Frequency: "+radioFrequency);
+    send((String)"$\tRemote_Bandwidth: "+radioBandwidth);
+    send((String)"$\tRemote_Sync word: "+syncWord);
+    send((String)"$\tRemote_Spreading Factor: "+spreadingFactor);
     send((String)"$\tRemote_Chirp rate: "+chirpRate);
-    send("$Remote_Radio: OK");
+    send((String)"$Remote_Radio: OK");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -186,10 +193,18 @@ int get_chipSelect(void){
     return chipSelect;
 }
 
-void sd_begin(void){
+void sd_begin(void){/*
+    Sd2Card card;
+    SdVolume volume;
     Serial.print("Initializing SD card...");
     pinMode(chipSelect,OUTPUT);
-
+    if (!card.init(SPI_HALF_SPEED,chipSelect)){
+        Serial.println("big shit");
+        return;
+    } else {
+        Serial.println("little shit");
+    }
+    */
     // see if the card is present and can be initialized:
     if (!SD.begin(chipSelect)) {
         Serial.print("__ERROR__: ");
@@ -205,7 +220,7 @@ void sd_begin(void){
             fileIndex++;
         } else {
             logName = nameToCheck;
-            Serial.println("\tFile Name: "+logName);
+            Serial.println((String)"\tFile Name: "+logName);
             break;
         }
     }
@@ -291,12 +306,15 @@ double course_to_target(void){
 void led_begin(void){
     pinMode(ledPin,OUTPUT);
     digitalWrite(ledPin,LOW);
+    //analogWrite(ledPin,0);
 }
 
 void flash(){
-    digitalWrite(ledPin,HIGH);
-    delay(ledDelay);
-    digitalWrite(ledPin,LOW);
+    //digitalWrite(ledPin,HIGH);
+    //analogWrite(ledPin,1023);
+    //delay(ledDelay);
+    //digitalWrite(ledPin,LOW);
+    //analogWrite(ledPin,0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -490,7 +508,7 @@ void telemetry_send(void){
     }
 
     // SGP40
-    if (sgp.begin()){
+    if (sgp.begin(&Wire1)){
         prints(String(sgp.measureRaw()));                                   // raw voc reading
         prints(String(sgp.measureVocIndex(temperature,humidity)));          // voc index based on temperature and humidity
     } else {
@@ -707,6 +725,22 @@ bool checksum_invalid(String data){
 ///////////////////////////////////////////////////////////////////////////////////
 // ~SERVO
 
+void servo_lib_test(void){
+    PWMServo myServo;
+    myServo.attach(servoPin);
+    myServo.write(90);
+    for (int i = 0; i<20; i++){
+        myServo.write(135);
+        delay(1000);
+        myServo.write(90);
+        delay(1000);
+        myServo.write(45);
+        delay(1000);
+        myServo.write(90);
+        delay(1000);
+    }
+}
+
 void servo_stop(void){
     analogWrite(servoPin,servoNeutral);
 }
@@ -762,9 +796,9 @@ void servo_reset(){
 void servo_test(int iterations = 1){
     while (true){
         set_servo_position(60);
-        delay(1000);
+        threads.delay(1000);
         set_servo_position(-60);
-        delay(1000);
+        threads.delay(1000);
     }
 }
 
@@ -783,6 +817,7 @@ void guidance_begin(void){
     Serial.println("Guidance info:");
     Serial.println((String)"\tTarget latitude: "+targetLatitude);
     Serial.println((String)"\tTarget longitude: "+targetLongitude);
+    Serial.println(bmeAddress);
     if (bme.begin(bmeAddress)){
         Serial.println((String)"\tCurrent altutude: "+read_altitude());
     } else {
@@ -869,8 +904,8 @@ void zero_altitude(void){
 void setup(){
     kacat_init();
     if (inFlight){
-        threads.addThread(broadcast_data);
-        threads.addThread(servo_test);
+        //threads.addThread(broadcast_data);
+        //threads.addThread(servo_test);
     } else {
         receive();
         handle_incoming_data();
@@ -878,4 +913,5 @@ void setup(){
 }
 
 void loop(){
+    broadcast_data();
 }
