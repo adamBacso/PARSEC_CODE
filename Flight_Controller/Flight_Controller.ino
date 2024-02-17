@@ -24,26 +24,27 @@
 #define GPS_SERIAL      Serial1
 
 // GUIDANCE THRESHOLDS
-volatile bool gpsActive = false;
+bool gpsActive = false;
 int guidanceAltitudeThreshold = 0; // m
 int guidanceVSpeedThreshold = -2; // m/s
 int thresholdDistanceToTarget = 10; // m
 int courseDeviationThreshold = 0.5; // in degrees
 float drumRadius = 1.1; // in cm
 float maxPullLength = 4; // in cm
-double targetLatitude = 47.4979; // Budapest coordinates
-double targetLongitude = 19.0402;
+int maxAngle = 45;
+double targetLatitude = 47.2540; // Budapest coordinates
+double targetLongitude = 19.1026;
 float zeroAltitude = 0;
 bool inFlight = true;
 
 // SERVO
-int servoPin = 4;
+int servoPin = 5;
 volatile int servoCurrentPosition = 0;
 float servoSpeed = 0.54;
 int servoSpeedRatio = 1;
 int servoNeutral = 93;
 float servoFrequency = 240;
-int clockwise = 67;
+int clockwise = 66;
 int counterclockwise = 120;
 
 // RADIO
@@ -63,7 +64,7 @@ const char checksumIdentifier = '*';
 
 // SENSORS
 Adafruit_BME280 bme; int bmeAddress = 0x76;
-const double SEA_LEVEL_PRESSURE_HPA = (1013.25);
+double SEA_LEVEL_PRESSURE_HPA = (1013.25);
 Adafruit_MPU6050 mpu; int mpuAddress = 0x68;
 Adafruit_SGP40 sgp; int sgpAddress = 0x59;
 TinyGPSPlus gps; int gpsBaud = 9600;
@@ -93,7 +94,6 @@ void kacat_init(void){
     threads.addThread(feed_gps);
     Serial.println("####__KACAT_INIT__####");
     telemetry_begin();
-
     get_radio_info();
     sd_begin();
     servo_begin();
@@ -101,10 +101,12 @@ void kacat_init(void){
     guidance_begin();
     if (Serial){
         while (!go){
+            Serial.println("Checking");
             capture_command();
         }
         inFlight = true;
     } else {
+        receive();
         while (!go){
             handle_incoming_data();
         }
@@ -134,13 +136,20 @@ void send_request(String command){
 }
 
 void send(String data){
-    while (!COMMS_SERIAL.availableForWrite()){}
+    if (!Serial){
+        stop_reception();
+        delay(250);
+        COMMS_SERIAL.clear();
+    }
     COMMS_SERIAL.println("radio tx "+string_to_hex(data)+" 1");
     sd_write(data);
+    COMMS_SERIAL.clear();
 }
 
 void receive(void){
     COMMS_SERIAL.println("radio rx 0");
+    delay(50);
+    COMMS_SERIAL.clear();
 }
 
 void stop_reception(void){
@@ -148,26 +157,35 @@ void stop_reception(void){
 }
 
 void get_radio_info(){
+    delay(500);
     COMMS_SERIAL.clear();
     COMMS_SERIAL.println("radio get freq");
     while ((COMMS_SERIAL.available()<=0));
     String frequencyString = COMMS_SERIAL.readString();
-    Serial.println(frequencyString);
     radioFrequency = (int)frequencyString.toInt();
+    delay(500);
+    COMMS_SERIAL.clear();
     COMMS_SERIAL.println("radio get bw");
     while (!(COMMS_SERIAL.available()>0));
     String bwString = COMMS_SERIAL.readString();
     radioBandwidth = (int)bwString.toInt();
+    delay(500);
+    COMMS_SERIAL.clear();
     COMMS_SERIAL.println("radio get sync");
     while (!(COMMS_SERIAL.available()>0));
     syncWord = (int)COMMS_SERIAL.readString().toInt();
+    delay(500);
+    COMMS_SERIAL.clear();
     COMMS_SERIAL.println("radio get sf");
     while (!(COMMS_SERIAL.available()>0));
-    spreadingFactor = (int)COMMS_SERIAL.readString().toInt();
+    String rawSF = COMMS_SERIAL.readString();
+    spreadingFactor = (int)String(rawSF[2]).toInt();
+    delay(500);
+    COMMS_SERIAL.clear();
     COMMS_SERIAL.println("radio get cr");
     while (!(COMMS_SERIAL.available()>0));
     String rawCR = COMMS_SERIAL.readString();
-    chirpRate = rawCR[0] / rawCR[2];
+    chirpRate = String(rawCR[0]).toFloat()/ String(rawCR[2]).toFloat();
 
     Serial.println("Radio info:");
     Serial.println((String)"\tFrequency: "+radioFrequency);
@@ -175,6 +193,8 @@ void get_radio_info(){
     Serial.println((String)"\tSync word: "+syncWord);
     Serial.println((String)"\tSpreading Factor: "+spreadingFactor);
     Serial.println((String)"\tChirp rate: "+chirpRate);
+    radio_bitrate();
+    Serial.println((String)"\tRadio bitrate: "+radioBitrate);
     Serial.println("Radio: OK");
     send((String)"$\tRemote_Frequency: "+radioFrequency);
     send((String)"$\tRemote_Bandwidth: "+radioBandwidth);
@@ -202,21 +222,19 @@ void sd_begin(void){
     pinMode(chipSelect,OUTPUT);
 
     // see if the card is present and can be initialized:
-    if (!SD.begin(chipSelect)) {
+    if (SD.begin(chipSelect)) {
+        Serial.println("SD: OK");
+        int fileIndex = 1;
+        while (SD.exists((logName+fileIndex+logType).c_str())){
+            fileIndex++;
+        }
+        logName = logName+fileIndex+logType;
+        Serial.println((String)"\tFile Name: "+logName);
+        sd_write("");
+    } else {
         Serial.print("__ERROR__: ");
         Serial.println("Card failed, or not present");
-    } else {
-        Serial.println("SD: OK");
     }
-
-    int fileIndex = 1;
-    while (SD.exists((logName+fileIndex+logType).c_str())){
-        fileIndex++;
-    }
-    logName = logName+fileIndex+logType;
-    Serial.println((String)"\tFile Name: "+logName);
-    sd_write("");
-
 }
 
 void sd_write(String data){
@@ -240,17 +258,13 @@ void set_target(double latitude, double longitude){
 volatile bool gpsAcquisitionTerminate = false;
 void gps_begin(void){
     Serial.print("GPS initializing");
-    while (!gps.location.isUpdated()){
+    while (!gps.location.isUpdated()||!gpsAcquisitionTerminate){
         Serial.print(".");
-        send("$waiting for gps...");
-        if (COMMS_SERIAL.available()){
-            delegate_incoming_telemetry();
-        } else if (Serial.available()){
+        //send("$waiting for gps...");
+        if (Serial){
             capture_command();
-        }
-        if (gpsAcquisitionTerminate ){
-            gpsAcquisitionTerminate = false;
-            break;
+        } else {
+            delegate_incoming_telemetry();
         }
         delay(500);
     } Serial.println();
@@ -274,14 +288,14 @@ const char *gpsStream =
 void feed_gps(void){
     while (gpsActive){
         while (GPS_SERIAL.available()){
+            /*
             gps.encode(GPS_SERIAL.read());
+            */
+            if (*gpsStream){
+                gps.encode(*gpsStream++);
+            }
         }
     }
-    /*
-    if (*gpsStream){
-        encode(*gpsStream++);
-    }
-    */
 }
 
 double distance_to_target(void){
@@ -297,14 +311,14 @@ double course_to_target(void){
 // ~LED
 
 void led_begin(void){
-    pinMode(ledPin,OUTPUT);
-    digitalWrite(ledPin,LOW);
+    //pinMode(ledPin,OUTPUT);
+    //digitalWrite(ledPin,LOW);
 }
 
 void flash(){
-    digitalWrite(ledPin,HIGH);
-    delay(ledDelay);
-    digitalWrite(ledPin,LOW);
+    //digitalWrite(ledPin,HIGH);
+    //delay(ledDelay);
+    //digitalWrite(ledPin,LOW);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -400,16 +414,13 @@ uint32_t elapsedTime;
 void broadcast_data(void){
     flash();
     while (1){
-        elapsedTime = millis()-broadcastStartTime;
-        if (elapsedTime >= broadcastStartTime + sleepAmount){
-            broadcastStartTime = millis();
-            telemetry_send();
-            set_sleep_amount();
-            flash();
-            //delay(100);
-            feed_gps();
-        }
-        threads.yield();
+        //String gpsData = GPS_SERIAL.readString();
+        //if (gpsData.startsWith("$GPGGA")){
+            //Serial.println(gpsData);
+        //}
+        telemetry_send();
+        set_sleep_amount();
+        threads.delay(sleepAmount);
     }
 }
 
@@ -419,7 +430,7 @@ void set_sleep_amount(void){
 }
 
 void radio_bitrate(){
-    radioBitrate = spreadingFactor * (radioBandwidth/pow(2,spreadingFactor)) * chirpRate;
+    radioBitrate = spreadingFactor * (radioBandwidth*1000/pow(2,spreadingFactor)) * chirpRate;
 }
 
 const String telemetryDataNames = "packetCount,missionTime,internalTemperature,gpsAge,latitude,longitude,courseToTarget,distanceToTarget,currentCourse,gpsAltitude,barometricAltitude,bmeTemperature,humidity,accelerationX,accelerationY,accelerationZ,gyroscopeX,gyroscopeY,gyroscopeZ,mpuTemperature,sgpRawVoc,sgpVocIndex,uptime,sleepTime,checksum,transmissionSize";
@@ -438,87 +449,73 @@ void telemetry_send(void){
     prints(tempmonGetTemp());                                               // internal temperature
 
     // GPS - WLR089u0
-    if (gps.location.isValid()){
-        prints(String(gps.location.age()));                                 // gps age
+    ////if (gps.location.isValid()){
         prints(String(gps.location.lat()));                                 // latitude
         prints(String(gps.location.lng()));                                 // longitude
         prints(String(course_to_target()));                                 // course to target
         prints(String(distance_to_target()));                               // distance to target
-    }else{
-        for (int i = 0; i<5; i++){
-            prints("#");
-        }
-    }
+    //}else{
+    //    for (int i = 0; i<5; i++){
+    //        prints("#");
+    //    }
+    //}
 
-    if (gps.course.isValid()){
+    //if (gps.course.isValid()){
         prints(String(gps.course.deg()));                                   // current course
-    }else{
-        prints("#");
-    }
+    //}else{
+    //    prints("#");
+    //}
 
-    if (gps.altitude.isValid()){
+    //if (gps.altitude.isValid()){
         prints(String(gps.altitude.meters()));                              // gps altitude
-    }else{
-        prints("#");
-    }
+    //}else{
+    //    prints("#");
+    //}
     
     // BME280
     float temperature = 0;
     float humidity = 0;
-    if (bme.begin(bmeAddress)){
-        prints(String(read_altitude()));                                    // altitude
-        temperature = bme.readTemperature();
-        prints(String(temperature));                                        // temperature
-        humidity = bme.readHumidity();
-        prints(String(humidity));                                           // humidity
-    }else{
-        for (int i = 0; i<3; i++){
-            prints("#");
-        }
-    }
+    prints(String(read_altitude()));                                    // altitude
+    temperature = bme.readTemperature();
+    prints(String(temperature));                                        // temperature
+    humidity = bme.readHumidity();
+    prints(String(humidity));                                           // humidity
 
     // MPU-6050
-    if (mpu.begin(mpuAddress)){
-        sensors_event_t a, g, temp;
-        mpu.getEvent(&a, &g, &temp);
-        // acceleration
-        prints(String(a.acceleration.x));                                   // acceleration x
-        prints(String(a.acceleration.y));                                   // acceleration y
-        prints(String(a.acceleration.z));                                   // acceleration z
-        // gyroscope
-        prints(String(g.gyro.x));                                           // gyro x
-        prints(String(g.gyro.y));                                           // gyro y
-        prints(String(g.gyro.z));                                           // gyro z
-        // temperature
-        prints(String(temp.temperature));                                   // mpu ext. temperature
-    } else {
-        for (int i = 0; i<7; i++){
-            prints("#");
-        }
-    }
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+    // acceleration
+    prints(String(a.acceleration.x));                                   // acceleration x
+    prints(String(a.acceleration.y));                                   // acceleration y
+    prints(String(a.acceleration.z));                                   // acceleration z
+    // gyroscope
+    prints(String(g.gyro.x));                                           // gyro x
+    prints(String(g.gyro.y));                                           // gyro y
+    prints(String(g.gyro.z));                                           // gyro z
+    // temperature
 
     // SGP40
-    if (sgp.begin()){
-        prints(String(sgp.measureRaw()));                                   // raw voc reading
-        prints(String(sgp.measureVocIndex(temperature,humidity)));          // voc index based on temperature and humidity
-    } else {
-        for (int i = 0; i<2; i++){
-            prints("#");
-        }
-    }
+    //bool sgpAvailable = sgp.begin(&Wire1);
+    //Serial.println((String)"SGP state: "+sgpAvailable);
+    // if (sgpAvailable){
+    prints(String(sgp.measureVocIndex(temperature,humidity)));          // voc index based on temperature and humidity
+    //} else {
+    //    for (int i = 0; i<2; i++){
+    //        prints("#");
+    //    }
+    //}
 
-    prints(String(elapsedTime));                                            // uptime
     prints(String(sleepAmount));                                            // sleep time
 
     // CHECKSUM
     String checksum = get_checksum(printBuffer);                            // checksum
     printBuffer += checksumIdentifier+checksum;
-    transmissionSize += sizeof(string_to_hex(printBuffer));
+    transmissionSize += printBuffer.length();
     transmissionSize *= 8;
-    prints(String(transmissionSize));                                       // transmission size
+    prints(String(transmissionSize));                                      // transmission size
     send(printBuffer);
     Serial.println(printBuffer);
-    sd_write(printBuffer);
+    //sd_write(printBuffer);
 }
 
 String get_checksum(String data){
@@ -534,6 +531,7 @@ String get_checksum(String data){
 void handle_incoming_data(void){
     flash();
     while (true){
+        receive();
         delegate_incoming_telemetry();
         //threads.yield();
     }
@@ -592,14 +590,26 @@ __syntax__: CMDxxx123,123,... => COMMAND-CODEARG1,ARG2,...
     110 - set percent active (CMD110<percentActive>)
 
 2xx - SENSORS
+    201 - internal temperature
     210 - bme available
     211 - bme temperature
     212 - bme humidity
     213 - bme pressure
     214 - bme altitude
 
+    220 - mpu available
+    221 - mpu temperature
+
+    230 - sgp available
+    231 - sgp raw measurement
+    232 - sgp VOC index
+
+    291 - set pressure at sea level
+
 3xx - CONTROL
     310 - zero servo (CMD310)
+    311 - set servo clockwise speed
+    312 - set servo counterclockwise speed
     320 - set servo position to <position> (CMD320<position>)
     
     330 - set target location to current location (CMD330)
@@ -616,7 +626,7 @@ void handle_command(String command){
     int identifier = command.substring(0, commandCodeLength).toInt();
     String commandArgs = command.substring(commandCodeLength);
     int separatorIndex;
-;
+    Serial.println(F("Handling data"));
     
     switch (identifier) {
         case 0: { // flight ready mode
@@ -652,6 +662,11 @@ void handle_command(String command){
             percentActive = commandArgs.toFloat();
             break;
         }
+        case 201: {
+            String message = (String)"Internal temperature: "+tempmonGetTemp();
+            Serial.println(message);
+            break;
+        }
         case 210: {
             Serial.println((String)"BME280 available: "+bme.begin(bmeAddress));
             break;
@@ -660,8 +675,43 @@ void handle_command(String command){
             Serial.println((String)"BME temperature: "+bme.readTemperature());
             break;
         }
+        case 212: {
+            Serial.println((String)"Humidity: "+bme.readHumidity());
+            break;
+        }
+        case 213: {
+            Serial.println((String)"Pressure (Pa): "+bme.readPressure());
+            break;
+        }
+        case 214: {
+            Serial.println((String)"BME altitude: "+bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));
+            break;
+        }
+        case 230: {
+            String message = (String)"SGP40 available: "+sgp.begin(&Wire1);
+            Serial.println(message);
+            message = (String)"SGP40 test success: "+sgp.selfTest();
+            Serial.println(message);
+            break;
+        }
+        case 231: {
+            String message = (String)"Raw VOC measurement: "+sgp.measureRaw(bme.readTemperature(),bme.readHumidity());
+            Serial.println(message);
+            break;
+        }
+        case 232: {
+            break;
+        }
+        case 311: {
+            set_clockwise((int)commandArgs.toInt());
+            break;
+        }
+        case 312: {
+            set_counterclockwise((int)commandArgs.toInt());
+            break;
+        }
         case 320: { // set servo position
-            set_servo_position(commandArgs.toInt());
+            set_servo_position((int)commandArgs.toInt());
             break;
         }
         case 330: { // set target location to current location
@@ -694,6 +744,7 @@ void handle_command(String command){
         }
         case 900: { // terminate gps acquisition
             gpsAcquisitionTerminate = true;
+            Serial.println(F("GPS terminated"));
             break;
         }
         default: {
@@ -707,7 +758,9 @@ void handle_command(String command){
 
 void capture_command(){
     if (Serial.available()){
+        Serial.println("Got something");
         String command = Serial.readString();
+        Serial.println("Command received");
         if (command.startsWith(commandPreamble)){
             send(command);
             Serial.println(command+" sent!");
@@ -740,17 +793,17 @@ void rotate_servo(int angle){
     }
 }
 
-void set_servo_position(int position){
-    if (abs(servoCurrentPosition+position) < 360){
-        int amountToRotate = position - servoCurrentPosition;
+void set_servo_position(int targetPosition){
+    if (abs(servoCurrentPosition+targetPosition) < 50){
+        int amountToRotate = targetPosition - servoCurrentPosition;
         Serial.println(servoCurrentPosition);
         Serial.println(amountToRotate);
-        rotate_servo(amountToRotate);
         int servoSleep = abs(amountToRotate / servoSpeed);
+        rotate_servo(amountToRotate);
         Serial.println(servoSleep);
-        servoCurrentPosition += amountToRotate;
         threads.delay(servoSleep);
         servo_stop();
+        servoCurrentPosition += amountToRotate;
     }
     threads.yield();
 }
@@ -764,7 +817,6 @@ void servo_begin(void){
     analogWriteFrequency(servoPin,servoFrequency);
     servo_stop();
     servo_zero();
-    servo_reset();
     Serial.println("Servo:");
     Serial.println((String)"\tClockwise speed: "+clockwise);
     Serial.println((String)"\tCounterclockwise speed: "+counterclockwise);
@@ -815,6 +867,17 @@ void guidance_begin(void){
     Serial.println("Guidance: OK");
 }
 
+void tilt_controlled_servo(void){
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+
+    if (g.gyro.x > 0){
+        set_servo_position(maxAngle);
+    }else{
+        set_servo_position(maxAngle*-1);
+    }
+}
+
 void set_guidance_altitude_threshold(float altitude){
     guidanceAltitudeThreshold = altitude;
 }
@@ -826,16 +889,17 @@ void set_guidance_vspeed_threshold(float vspeed){
 void confirmGuidance(void){
     while (!(COMMS_SERIAL.availableForWrite()>0));
     send("__guidance active__");
+    threads.yield();
 }
 
 void descent_guidance(void){
-    while (read_altitude()<guidanceAltitudeThreshold){
-        threads.delay(250);
-    } threads.delay(1000); // ensures that guidance only activates after passing threshold altitude
-    while (vertical_speed()>guidanceVSpeedThreshold){
-        threads.delay(250);
-    }
-    threads.addThread(confirmGuidance);
+    // while (read_altitude()<guidanceAltitudeThreshold){
+    //     threads.delay(250);
+    // } threads.delay(1000); // ensures that guidance only activates after passing threshold altitude
+    // while (vertical_speed()>guidanceVSpeedThreshold){
+    //     threads.delay(250);
+    // }
+    // threads.addThread(confirmGuidance);
 
     bool guidanceNeeded = true;
     while (guidanceNeeded){
@@ -844,23 +908,22 @@ void descent_guidance(void){
                 int32_t courseDeviation = course_to_target()-gps.course.value();
                 if (abs(courseDeviation) > courseDeviationThreshold){
                     if (courseDeviation > 0){
-                        pull_line_amount(maxPullLength);
+                        set_servo_position(maxAngle);
                     } else {
-                        pull_line_amount(-maxPullLength);
+                        set_servo_position(maxAngle*-1);
                     }
                 } else {
                     servo_reset();
                 }
             } else {
-                pull_line_amount(maxPullLength);
+                set_servo_position(maxAngle);
                 guidanceNeeded = false;
             }
         } else {
             servo_reset();
         }
-        threads.yield();
+        threads.delay(50);
     }
-    threads.yield();
 }
 
 
@@ -888,11 +951,21 @@ void zero_altitude(void){
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+// BODY
 void setup(){
-    kacat_init();
-    if (inFlight){/*
+    sgp.begin(&Wire1);
+    sgp.selfTest();
+    //kacat_init();
+    serial_begin();
+    telemetry_begin();
+    set_servo_position(20);
+    delay(500);
+    set_servo_position(0);
+    gpsActive=true;
+    if (inFlight){
         threads.addThread(broadcast_data);
-        threads.addThread(servo_test);*/
+        //threads.addThread(descent_guidance);
     } else {
         receive();
         handle_incoming_data();
@@ -900,5 +973,8 @@ void setup(){
 }
 
 void loop(){
-    telemetry_send();
+    /*
+    tilt_controlled_servo();
+    delay(250);
+    */
 }
