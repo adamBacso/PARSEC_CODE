@@ -24,7 +24,7 @@
 #define GPS_SERIAL      Serial1
 
 // GUIDANCE THRESHOLDS
-bool gpsActive = false;
+volatile bool gpsActive = false;
 int guidanceAltitudeThreshold = 0; // m
 int guidanceVSpeedThreshold = -2; // m/s
 int thresholdDistanceToTarget = 10; // m
@@ -84,11 +84,7 @@ const int ledDelay = 25; // in ms
 bool go = false;
 
 void kacat_init(void){
-    led_begin();
-    for (int i = 0; i<10; i++){
-        delay(975);
-        flash();
-    }
+    delay(10000);
     serial_begin();
     gpsActive = true;
     threads.addThread(feed_gps);
@@ -99,16 +95,24 @@ void kacat_init(void){
     servo_begin();
     gps_begin();
     guidance_begin();
+    COMMS_SERIAL.clear();
+    delay(250);
+    while (!go){
+        //capture_command();
+        //COMMS_SERIAL.clear();
+        //delay(250);
+        delegate_incoming_telemetry();
+        inFlight = true;
+    }
     if (Serial){
         while (!go){
-            Serial.println("Checking");
             capture_command();
         }
         inFlight = true;
     } else {
         receive();
         while (!go){
-            handle_incoming_data();
+            delegate_incoming_telemetry();
         }
         inFlight = false;
     }
@@ -238,11 +242,13 @@ void sd_begin(void){
 }
 
 void sd_write(String data){
+    /*
     flightLog = SD.open(logName.c_str(), FILE_WRITE);
     if (flightLog){
         flightLog.println(data.c_str());
     }
     flightLog.close();
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -258,16 +264,21 @@ void set_target(double latitude, double longitude){
 volatile bool gpsAcquisitionTerminate = false;
 void gps_begin(void){
     Serial.print("GPS initializing");
-    while (!gps.location.isUpdated()||!gpsAcquisitionTerminate){
+    receive();
+    delay(250);
+    COMMS_SERIAL.clear();
+    delay(250);
+    while ((!gps.location.isUpdated())&&(!gpsAcquisitionTerminate)){
         Serial.print(".");
         //send("$waiting for gps...");
+        delegate_incoming_telemetry();
         if (Serial){
-            capture_command();
+            //capture_command();
         } else {
-            delegate_incoming_telemetry();
         }
         delay(500);
     } Serial.println();
+    stop_reception();
     Serial.println("GPS info:");
     Serial.println((String)"\tCurrent latitude: "+gps.location.lat());
     Serial.println((String)"\tCurrent longitude: "+gps.location.lng());
@@ -285,16 +296,19 @@ const char *gpsStream =
     "$GPRMC,045251.000,A,3014.4275,N,09749.0626,W,0.51,217.94,030913,,,A*7D\r\n"
     "$GPGGA,045252.000,3014.4273,N,09749.0628,W,1,09,1.3,206.9,M,-22.5,M,,0000*6F\r\n";
 
+// runs continously so that the gps is continously fed
 void feed_gps(void){
     while (gpsActive){
         while (GPS_SERIAL.available()){
-            /*
-            gps.encode(GPS_SERIAL.read());
-            */
-            if (*gpsStream){
-                gps.encode(*gpsStream++);
+            if (gps.encode(GPS_SERIAL.read())){
             }
         }
+        /*
+        if (*gpsStream){
+            gps.encode(*gpsStream++);
+        }
+        */
+        threads.delay(500);
     }
 }
 
@@ -376,7 +390,7 @@ void telemetry_begin(void){
     packetCount = 0;
     mission_begin();
     Serial.println("Telemetry: OK");
-    send("Telemetry: OK");
+    send("$Telemetry: OK");
 }
 
 void prints(String data){
@@ -429,15 +443,14 @@ void set_sleep_amount(void){
     sleepAmount = (transmissionTime/percentActive)*(100-percentActive);
 }
 
-void radio_bitrate(){
+void radio_bitrate(void){
     radioBitrate = spreadingFactor * (radioBandwidth*1000/pow(2,spreadingFactor)) * chirpRate;
 }
 
 const String telemetryDataNames = "packetCount,missionTime,internalTemperature,gpsAge,latitude,longitude,courseToTarget,distanceToTarget,currentCourse,gpsAltitude,barometricAltitude,bmeTemperature,humidity,accelerationX,accelerationY,accelerationZ,gyroscopeX,gyroscopeY,gyroscopeZ,mpuTemperature,sgpRawVoc,sgpVocIndex,uptime,sleepTime,checksum,transmissionSize";
 void telemetry_send(void){
     while (!(COMMS_SERIAL.availableForWrite()>0)){
-        //threads.delay(1);
-        delay(1);
+        threads.delay(2);
     }
     transmissionSize = 0;
     printBuffer = "";
@@ -515,7 +528,7 @@ void telemetry_send(void){
     prints(String(transmissionSize));                                      // transmission size
     send(printBuffer);
     Serial.println(printBuffer);
-    //sd_write(printBuffer);
+    sd_write(printBuffer);
 }
 
 String get_checksum(String data){
@@ -530,29 +543,26 @@ String get_checksum(String data){
 
 void handle_incoming_data(void){
     flash();
+    receive();
     while (true){
-        receive();
         delegate_incoming_telemetry();
-        //threads.yield();
+        threads.delay(5);
     }
 }
 void delegate_incoming_telemetry(void){
-    //Serial.println("checking incoming data!");
+    Serial.println("checking incoming data!");
     String incoming;
     
-    if (COMMS_SERIAL.available()){
-        //Serial.println("got data!!!!!!");
-        flash();
-        delay(1000);
-        flash();
+    if (COMMS_SERIAL.available()>0){
+        Serial.println("got data!!!!!!");
         incoming = COMMS_SERIAL.readString();
-        //Serial.println("echo: "+incoming);
+        Serial.println("echo: "+incoming);
         
         if (incoming.startsWith(telemetryPreamble)){
             //Serial.println("checking telemetry");
             incoming = incoming.substring(telemetryPreamble.length());
             incoming = hex_to_string(incoming);
-            //Serial.println("string echo: "+incoming);
+            Serial.println("string echo: "+incoming);
 
             // TODO: write incoming data to sd
             if (checksum_invalid(incoming)){
@@ -665,26 +675,37 @@ void handle_command(String command){
         case 201: {
             String message = (String)"Internal temperature: "+tempmonGetTemp();
             Serial.println(message);
+            send("$Remote: "+message);
             break;
         }
         case 210: {
-            Serial.println((String)"BME280 available: "+bme.begin(bmeAddress));
+            String message = (String)"BME280 available: "+bme.begin(bmeAddress);
+            Serial.println(message);
+            send("$Remote: "+message);
             break;
         }
         case 211: {
-            Serial.println((String)"BME temperature: "+bme.readTemperature());
+            String message =(String)"BME temperature: "+bme.readTemperature();
+            Serial.println(message);
+            send("$Remote: "+message);
             break;
         }
         case 212: {
-            Serial.println((String)"Humidity: "+bme.readHumidity());
+            String message =(String)"Humidity: "+bme.readHumidity();
+            Serial.println(message);
+            send("$Remote: "+message);
             break;
         }
         case 213: {
-            Serial.println((String)"Pressure (Pa): "+bme.readPressure());
+            String message =(String)"Pressure (Pa): "+bme.readPressure();
+            Serial.println(message);
+            send("$Remote: "+message);
             break;
         }
         case 214: {
-            Serial.println((String)"BME altitude: "+bme.readAltitude(SEA_LEVEL_PRESSURE_HPA));
+            String message =(String)"BME altitude: "+bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
+            Serial.println(message);
+            send("$Remote: "+message);
             break;
         }
         case 230: {
@@ -697,6 +718,7 @@ void handle_command(String command){
         case 231: {
             String message = (String)"Raw VOC measurement: "+sgp.measureRaw(bme.readTemperature(),bme.readHumidity());
             Serial.println(message);
+            send("$Remote: "+message);
             break;
         }
         case 232: {
@@ -758,12 +780,9 @@ void handle_command(String command){
 
 void capture_command(){
     if (Serial.available()){
-        Serial.println("Got something");
         String command = Serial.readString();
-        Serial.println("Command received");
         if (command.startsWith(commandPreamble)){
             send(command);
-            Serial.println(command+" sent!");
             handle_command(command.substring(3));
         }
     }
@@ -878,6 +897,15 @@ void tilt_controlled_servo(void){
     }
 }
 
+void dummy_test_flight(){
+    while (1){
+        set_servo_position(maxAngle);
+        threads.delay(5000);
+        set_servo_position(-maxAngle);
+        threads.delay(5000);
+    }
+}
+
 void set_guidance_altitude_threshold(float altitude){
     guidanceAltitudeThreshold = altitude;
 }
@@ -956,16 +984,18 @@ void zero_altitude(void){
 void setup(){
     sgp.begin(&Wire1);
     sgp.selfTest();
-    //kacat_init();
+    kacat_init();
     serial_begin();
     telemetry_begin();
+    servo_begin();
     set_servo_position(20);
     delay(500);
     set_servo_position(0);
     gpsActive=true;
+    threads.addThread(feed_gps);
     if (inFlight){
         threads.addThread(broadcast_data);
-        //threads.addThread(descent_guidance);
+        threads.addThread(dummy_test_flight);
     } else {
         receive();
         handle_incoming_data();
