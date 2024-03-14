@@ -1,4 +1,3 @@
-#include <PWMServo.h>
 #include <Wire.h>
 #include <SD.h>
 #include <SPI.h>
@@ -70,13 +69,13 @@ Adafruit_SGP40 sgp; int sgpAddress = 0x59;
 TinyGPSPlus gps; int gpsBaud = 9600;
 
 // SD CARD
-uint8_t chipSelect = 10U;
+uint8_t chipSelect = 10;
 File flightLog;
 String logName = "flightLog";
 const String logType = ".txt";
 
 // LED
-const uint8_t ledPin = 14;
+const uint8_t ledPin = 13;
 const int ledDelay = 25; // in ms
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -84,38 +83,46 @@ const int ledDelay = 25; // in ms
 bool go = false;
 
 void kacat_init(void){
-    delay(10000);
     serial_begin();
-    gpsActive = true;
-    threads.addThread(feed_gps);
-    Serial.println("####__KACAT_INIT__####");
-    telemetry_begin();
-    get_radio_info();
-    sd_begin();
-    servo_begin();
-    gps_begin();
-    guidance_begin();
-    COMMS_SERIAL.clear();
-    delay(250);
-    while (!go){
-        //capture_command();
-        //COMMS_SERIAL.clear();
-        //delay(250);
-        delegate_incoming_telemetry();
-        inFlight = true;
-    }
+    delay(10000); // wait for connection with the computer
     if (Serial){
-        while (!go){
-            capture_command();
-        }
-        inFlight = true;
-    } else {
-        receive();
-        while (!go){
-            delegate_incoming_telemetry();
-        }
-        inFlight = false;
+        Serial.println(F("KACAT Mission Control"));
+        Serial.print(F("Waiting for RADIO handshake"));
+        // manual_radio_setup();
+        // auto_radio_setup();
+        sd_begin();
     }
+    delay(1000);
+    sd_begin();
+    //gpsActive = true;
+    //threads.addThread(feed_gps);
+    //Serial.println("####__KACAT_INIT__####");
+    //telemetry_begin();
+    //get_radio_info();
+    //sd_begin();
+    //servo_begin();
+    //gps_begin();
+    //guidance_begin();
+    //receive();
+    //delay(250);
+    //COMMS_SERIAL.clear();
+    //delay(250);
+    //while (!go){
+    //    delegate_incoming_telemetry();
+    //    inFlight = true;
+    //}
+    //if (Serial){
+    //    while (!go){
+    //        capture_command();
+    //    }
+    //    inFlight = true;
+    //} else {
+    //    receive();
+    //    while (!go){
+    //        delegate_incoming_telemetry();
+    //    }
+    //    inFlight = false;
+    //}
 }
     
     
@@ -151,7 +158,10 @@ void send(String data){
 }
 
 void receive(void){
+    COMMS_SERIAL.clear();
     COMMS_SERIAL.println("radio rx 0");
+    while (!COMMS_SERIAL.available());
+    Serial.println(String("reception status")+COMMS_SERIAL.readString());
     delay(50);
     COMMS_SERIAL.clear();
 }
@@ -214,6 +224,45 @@ void radio_begin(void){
     COMMS_SERIAL.clear();
 }
 
+void manual_radio_setup(void){
+    Serial.println(COMMS_SERIAL.readString());
+    Serial.println(F("MANUAL_RADIO_SETUP"));
+    String serialCommand = "";
+    while (serialCommand != "q"){
+        if (Serial.available()>0){
+            serialCommand = Serial.readString();
+            if (serialCommand == "q"){
+                break;
+            }
+            COMMS_SERIAL.println(serialCommand);
+        }
+        else if (COMMS_SERIAL.available()>0){
+            Serial.println(COMMS_SERIAL.readString());
+        }
+    }
+}
+void send_command(String command){
+    Serial.println(command);
+    COMMS_SERIAL.println(command);
+    while (COMMS_SERIAL.available()<=0);
+    Serial.println(COMMS_SERIAL.readString());
+}
+
+void auto_radio_setup(void){
+    led_begin();
+    flash();
+    Serial.println(COMMS_SERIAL.readString());
+    Serial.println(F("AUTOMATIC_RADIO_SETUP"));
+    send_command(String("sys get ver"));
+    send_command(String("radio rxstop"));
+    send_command(String("radio rx 0"));
+    while (true){
+        while ((COMMS_SERIAL.available()<=0) || (Serial.availableForWrite()<=0));
+        Serial.println(COMMS_SERIAL.readString());
+        flash();
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 // ~SD CARD
 
@@ -223,7 +272,7 @@ int get_chipSelect(void){
 
 void sd_begin(void){
     Serial.print("Initializing SD card...");
-    pinMode(chipSelect,OUTPUT);
+    //pinMode(chipSelect,OUTPUT);
 
     // see if the card is present and can be initialized:
     if (SD.begin(chipSelect)) {
@@ -325,14 +374,14 @@ double course_to_target(void){
 // ~LED
 
 void led_begin(void){
-    //pinMode(ledPin,OUTPUT);
-    //digitalWrite(ledPin,LOW);
+    pinMode(ledPin,OUTPUT);
+    digitalWrite(ledPin,LOW);
 }
 
 void flash(){
-    //digitalWrite(ledPin,HIGH);
-    //delay(ledDelay);
-    //digitalWrite(ledPin,LOW);
+    digitalWrite(ledPin,HIGH);
+    delay(ledDelay);
+    digitalWrite(ledPin,LOW);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -389,6 +438,7 @@ void telemetry_begin(void){
     sleepAmount = 1000;
     packetCount = 0;
     mission_begin();
+    stop_reception();
     Serial.println("Telemetry: OK");
     send("$Telemetry: OK");
 }
@@ -552,6 +602,7 @@ void handle_incoming_data(void){
 void delegate_incoming_telemetry(void){
     Serial.println("checking incoming data!");
     String incoming;
+    Serial.println(COMMS_SERIAL.readString());
     
     if (COMMS_SERIAL.available()>0){
         Serial.println("got data!!!!!!");
@@ -983,23 +1034,26 @@ void zero_altitude(void){
 // BODY
 void setup(){
     sgp.begin(&Wire1);
+    delay(100);
     sgp.selfTest();
+    uint32_t deviceBootTime = millis();
+    bool commandReceived = false;
     kacat_init();
-    serial_begin();
-    telemetry_begin();
-    servo_begin();
-    set_servo_position(20);
-    delay(500);
-    set_servo_position(0);
-    gpsActive=true;
-    threads.addThread(feed_gps);
-    if (inFlight){
-        threads.addThread(broadcast_data);
-        threads.addThread(dummy_test_flight);
-    } else {
-        receive();
-        handle_incoming_data();
-    }
+    // serial_begin();
+    // telemetry_begin();
+    // servo_begin();
+    // set_servo_position(20);
+    // delay(500);
+    // set_servo_position(0);
+    // gpsActive=true;
+    // threads.addThread(feed_gps);
+    // if (inFlight){
+    //     threads.addThread(broadcast_data);
+    //     threads.addThread(dummy_test_flight);
+    // } else {
+    //     receive();
+    //     handle_incoming_data();
+    // }
 }
 
 void loop(){
