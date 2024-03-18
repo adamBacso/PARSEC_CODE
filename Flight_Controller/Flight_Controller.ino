@@ -27,7 +27,7 @@ volatile bool gpsActive = false;
 int guidanceAltitudeThreshold = 0; // m
 int guidanceVSpeedThreshold = -2; // m/s
 int thresholdDistanceToTarget = 10; // m
-int courseDeviationThreshold = 0.5; // in degrees
+float courseDeviationThreshold = 0.5; // in degrees
 float drumRadius = 1.1; // in cm
 float maxPullLength = 4; // in cm
 int maxAngle = 45;
@@ -68,6 +68,8 @@ Adafruit_MPU6050 mpu; int mpuAddress = 0x68;
 Adafruit_SGP40 sgp; int sgpAddress = 0x59;
 TinyGPSPlus gps; int gpsBaud = 9600;
 
+int batteryVoltagePin = 1;
+
 // SD CARD
 uint8_t chipSelect = 10;
 File flightLog;
@@ -75,7 +77,7 @@ String logName = "flightLog";
 const String logType = ".txt";
 
 // LED
-const uint8_t ledPin = 13;
+const uint8_t ledPin = 14;
 const int ledDelay = 25; // in ms
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -85,15 +87,11 @@ bool go = false;
 void kacat_init(void){
     serial_begin();
     delay(10000); // wait for connection with the computer
-    if (Serial){
-        Serial.println(F("KACAT Mission Control"));
-        Serial.print(F("Waiting for RADIO handshake"));
-        // manual_radio_setup();
-        // auto_radio_setup();
-        sd_begin();
-    }
-    delay(1000);
+    Serial.println(F("KACAT Mission Control"));
+    Serial.print(F("Waiting for RADIO handshake"));
     sd_begin();
+    config();
+    auto_radio_setup();
     //gpsActive = true;
     //threads.addThread(feed_gps);
     //Serial.println("####__KACAT_INIT__####");
@@ -124,7 +122,37 @@ void kacat_init(void){
     //    inFlight = false;
     //}
 }
-    
+
+void config(void) {
+    File config = SD.open("config.txt", FILE_READ);
+    if (config){
+        config.read(); // 1
+        config.read(); // 2
+        radioFrequency = (int)config.readString().toInt(); // 3
+        config.read(); // 4
+        syncWord = (int)config.readString().toInt(); // 5
+        config.read(); // 6
+        radioBandwidth = (int)config.readString().toInt(); // 7
+        config.read(); // 8
+        spreadingFactor = (int)config.readString().toInt(); // 9
+        config.read(); // 10
+        courseDeviationThreshold = config.readString().toFloat(); // 11
+        config.read(); // 12
+        targetLatitude = (double)config.readString().toFloat(); // 13
+        config.read(); // 14
+        targetLongitude = (double)config.readString().toFloat(); // 15
+        config.read(); // 16
+        zeroAltitude = config.readString().toFloat(); // 17
+    }
+    else{
+        fatal_error("Config file not found.");
+    }
+}
+
+void fatal_error(const char* message){
+    Serial.println("ERROR: " + *message);
+    while (1);
+}
     
 ///////////////////////////////////////////////////////////////////////////////
 // ~SERIAL
@@ -271,6 +299,11 @@ int get_chipSelect(void){
 }
 
 void sd_begin(void){
+    pinMode(chipSelect, OUTPUT);
+    pinMode(11, OUTPUT);
+    pinMode(12, INPUT);
+    pinMode(13, OUTPUT);
+    digitalWrite(chipSelect,HIGH);
     Serial.print("Initializing SD card...");
     //pinMode(chipSelect,OUTPUT);
 
@@ -1028,6 +1061,13 @@ void zero_altitude(void){
     if (bme.begin(bmeAddress)){
         zeroAltitude = bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// SYSTEM
+float read_battery_voltage(void){
+    int sensorValue = analogRead(batteryVoltagePin);
+    return sensorValue * (5.0 / 1023.0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

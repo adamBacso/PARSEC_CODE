@@ -18,7 +18,8 @@
         "new": "cpp",
         "cinttypes": "cpp",
         "utility": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "string": "cpp"
     },
     "C_Cpp.default.compilerPath": "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\tools\\teensy-compile\\5.4.1\\arm\\bin\\arm-none-eabi-g++"
 }

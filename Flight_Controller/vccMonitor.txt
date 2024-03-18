@@ -1,0 +1,31 @@
+// Teensy 4.0 Battery Voltage Measurement
+
+const int batteryPin = A0; // Analog input pin connected to battery voltage
+float batteryVoltage;      // Battery voltage in volts
+float batteryPercentage;   // Battery charge percentage
+
+void setup() {
+    Serial.begin(9600);
+}
+
+void loop() {
+    // Read analog value from batteryPin
+    int rawValue = analogRead(batteryPin);
+
+    // Convert raw value to voltage (assuming Teensy uses 3.3V reference)
+    batteryVoltage = rawValue * 3.3 / 1023.0;
+
+    // Map voltage to battery charge percentage (adjust min and max values as needed)
+    batteryPercentage = map(batteryVoltage, 3.6, 4.2, 0, 100);
+
+    // Print battery information
+    Serial.print("Battery Voltage: ");
+    Serial.print(batteryVoltage, 2); // Display voltage with 2 decimal places
+    Serial.print(" V\t");
+
+    Serial.print("Battery Charge: ");
+    Serial.print(batteryPercentage, 1); // Display percentage with 1 decimal place
+    Serial.println(" %");
+
+    delay(1000); // Wait for a second before reading again
+}

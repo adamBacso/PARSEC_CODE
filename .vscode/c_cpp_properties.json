@@ -12,11 +12,20 @@
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
-                "C:\\Users\\adamg\\AppData\\Local\\Temp\\arduino\\sketches\\92C5C14666FD94CF4BAB78055F5B745E\\pch",
+                "C:\\Users\\adamg\\AppData\\Local\\Temp\\arduino\\sketches\\0C08503D84C0DD0D4D7B7B33D06050D7\\pch",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.3\\cores\\teensy4",
+                "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.3\\libraries\\Wire",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.3\\libraries\\SD\\src",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.3\\libraries\\SdFat\\src",
                 "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.3\\libraries\\SPI",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\CRC32\\src",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_Unified_Sensor",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_BME280_Library",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_BusIO",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_MPU6050",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\Adafruit_SGP40_Sensor\\src",
+                "C:\\Users\\adamg\\Documents\\Arduino\\libraries\\TinyGPSPlus\\src",
+                "C:\\Users\\adamg\\AppData\\Local\\Arduino15\\packages\\teensy\\hardware\\avr\\1.57.3\\libraries\\TeensyThreads",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\5.4.1\\arm\\arm-none-eabi\\include\\c++\\5.4.1",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\5.4.1\\arm\\arm-none-eabi\\include\\c++\\5.4.1\\arm-none-eabi",
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\5.4.1\\arm\\arm-none-eabi\\include\\c++\\5.4.1\\backward",
@@ -25,7 +34,7 @@
                 "c:\\users\\adamg\\appdata\\local\\arduino15\\packages\\teensy\\tools\\teensy-compile\\5.4.1\\arm\\arm-none-eabi\\include"
             ],
             "forcedInclude": [
-                "C:\\Users\\adamg\\AppData\\Local\\Temp\\arduino\\sketches\\92C5C14666FD94CF4BAB78055F5B745E\\pch\\Arduino.h"
+                "C:\\Users\\adamg\\AppData\\Local\\Temp\\arduino\\sketches\\0C08503D84C0DD0D4D7B7B33D06050D7\\pch\\Arduino.h"
             ],
             "cStandard": "c11",
             "cppStandard": "c++14",
