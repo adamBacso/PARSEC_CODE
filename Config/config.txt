@@ -9,9 +9,9 @@ v -spreadingFactor
 7
 v -courseDeviationThreshold
 0.5
+v -guidanceAltitudeThreshold
+-10
 v -targetLatitude
 47.497913
 v -targetLongitude
 19.040236
-v -currentAltitude
-0
