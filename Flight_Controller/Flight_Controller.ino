@@ -92,20 +92,21 @@ void kacat_init(void){
     Serial.println(F("KACAT Mission Control"));
     Serial.print(F("Waiting for RADIO handshake"));
     sd_begin();
-    config();
-    auto_radio_setup();
+    //config();
+    //auto_radio_setup();
     telemetry_begin();
     get_radio_info();
-    servo_begin();
-    gps_begin();
-    callibrate_altitude();
-    guidance_begin();
-    if (Serial){
+    //servo_begin();
+    //gps_begin();
+    //callibrate_altitude();
+    //guidance_begin();
+    //if (Serial){
         inFlight = true;
-    } else {
-        receive();
-        inFlight = false;
-    }
+    Serial.println("Starting flight");
+    //} else {
+    //    receive();
+    //    inFlight = false;
+    //}
 }
 
 void config(void) {
@@ -162,11 +163,6 @@ void send_request(String command){
 }
 
 void send(String data){
-    if (!Serial){
-        stop_reception();
-        delay(250);
-        COMMS_SERIAL.clear();
-    }
     COMMS_SERIAL.println("radio tx "+string_to_hex(data)+" 1");
     sd_write(data);
     COMMS_SERIAL.clear();
@@ -284,11 +280,13 @@ void sd_begin(void){
 }
 
 void sd_write(String data){
+    /*
     flightLog = SD.open(logName.c_str(), FILE_WRITE);
     if (flightLog){
         flightLog.println(data.c_str());
     }
     flightLog.close();
+    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -455,15 +453,16 @@ String hex_to_string(String hexString){
 
 uint32_t elapsedTime;
 void broadcast_data(void){
-    flash();
+    //flash();
     while (1){
         //String gpsData = GPS_SERIAL.readString();
         //if (gpsData.startsWith("$GPGGA")){
             //Serial.println(gpsData);
         //}
         telemetry_send();
-        set_sleep_amount();
-        threads.delay(sleepAmount);
+        //set_sleep_amount();
+        delay(1000);
+        //threads.delay(sleepAmount);
     }
 }
 
@@ -478,9 +477,9 @@ void radio_bitrate(void){
 
 const String telemetryDataNames = "packetCount,missionTime,internalTemperature,gpsAge,latitude,longitude,courseToTarget,distanceToTarget,currentCourse,gpsAltitude,barometricAltitude,bmeTemperature,humidity,accelerationX,accelerationY,accelerationZ,gyroscopeX,gyroscopeY,gyroscopeZ,mpuTemperature,sgpRawVoc,sgpVocIndex,uptime,sleepTime,checksum,transmissionSize";
 void telemetry_send(void){
-    while (!(COMMS_SERIAL.availableForWrite()>0)){
-        threads.delay(2);
-    }
+    //while (!(COMMS_SERIAL.availableForWrite()>0)){
+    //    threads.delay(2);
+    //}
     transmissionSize = 0;
     printBuffer = "";
 
@@ -492,10 +491,9 @@ void telemetry_send(void){
 
     // GPS - WLR089u0
     ////if (gps.location.isValid()){
-        prints(String(gps.location.lat()));                                 // latitude
-        prints(String(gps.location.lng()));                                 // longitude
-        prints(String(course_to_target()));                                 // course to target
-        prints(String(distance_to_target()));                               // distance to target
+        prints(String(gps.location.lat(),6U));                                 // latitude
+        prints(String(gps.location.lng(),6U));                                 // longitude
+        prints(String(course_to_target(),6U));                                 // course to target
     //}else{
     //    for (int i = 0; i<5; i++){
     //        prints("#");
@@ -503,38 +501,47 @@ void telemetry_send(void){
     //}
 
     //if (gps.course.isValid()){
-        prints(String(gps.course.deg()));                                   // current course
+        prints(String(gps.course.deg(),6U));                                   // current course
     //}else{
     //    prints("#");
     //}
 
     //if (gps.altitude.isValid()){
-        prints(String(gps.altitude.meters()));                              // gps altitude
+        prints(String(gps.altitude.meters(),6U));                              // gps altitude
     //}else{
     //    prints("#");
     //}
-    
     // BME280
     float temperature = 0;
     float humidity = 0;
-    prints(String(bme.readPressure()/100));                                    // pressure in hPa
-    temperature = bme.readTemperature();
-    prints(String(temperature));                                        // temperature
-    humidity = bme.readHumidity();
+    float pressure = 0;
+    if (bme.begin(bmeAddress)){
+        pressure = bme.readPressure()/100;
+        temperature = bme.readTemperature();
+        humidity = bme.readHumidity();
+    }
+    prints(String(pressure));                                    //     pressure in hPa
+    prints(String(temperature));       
     prints(String(humidity));                                           // humidity
 
     // MPU-6050
-    sensors_event_t a, g, temp;
-    mpu.getEvent(&a, &g, &temp);
-    // acceleration
-    prints(String(a.acceleration.x));                                   // acceleration x
-    prints(String(a.acceleration.y));                                   // acceleration y
-    prints(String(a.acceleration.z));                                   // acceleration z
-    // gyroscope
-    prints(String(g.gyro.x));                                           // gyro x
-    prints(String(g.gyro.y));                                           // gyro y
-    prints(String(g.gyro.z));                                           // gyro z
-    // temperature
+    if (mpu.begin(mpuAddress)){
+        sensors_event_t a, g, temp;
+        mpu.getEvent(&a, &g, &temp);
+        // acceleration
+        prints(String(a.acceleration.x));                                   // acceleration x
+        prints(String(a.acceleration.y));                                   // acceleration y
+        prints(String(a.acceleration.z));                                   // acceleration z
+        // gyroscope
+        prints(String(g.gyro.x));                                           // gyro x
+        prints(String(g.gyro.y));                                           // gyro y
+        prints(String(g.gyro.z));                                           // gyro z
+    }// temperature
+    else{
+        for (int i = 0; i<6; i++){
+            prints("");
+        }
+    }
 
     // SGP40
     //bool sgpAvailable = sgp.begin(&Wire1);
@@ -546,7 +553,6 @@ void telemetry_send(void){
     //        prints("#");
     //    }
     //}
-
     prints(String(sleepAmount));                                            // sleep time
 
     // CHECKSUM
@@ -1002,8 +1008,9 @@ void setup(){
     sgp.selfTest();
     kacat_init();
     if (inFlight){
-        threads.addThread(broadcast_data);
-        threads.addThread(descent_guidance);
+        broadcast_data();
+        //threads.addThread(broadcast_data);
+        //threads.addThread(descent_guidance);
     } else {
         receive();
         handle_incoming_data();

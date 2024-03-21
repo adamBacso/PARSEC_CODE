@@ -1,0 +1,40 @@
+KACAT Mission Control
+Waiting for RADIO handshake
+AUTOMATIC_RADIO_SETUP
+radio rxstop
+ok
+
+radio set freq 868000000
+ok
+
+radio set bw 125
+ok
+
+radio set sf 7
+invalid_param
+
+radio set sync 34
+ok
+
+Telemetry: OK
+$Telemetry: OK
+Frequency: radio get freq
+868000000
+
+Bandwidth: radio get bw
+125
+
+Sync word: radio get sync
+34
+
+Spreading factor: radio get sf
+sf7
+
+Chirp rate: radio get cr
+4/5
+
+Radio info:
+Servo:
+	Clockwise speed: 66
+	Counterclockwise speed: 120
+Servo: OK

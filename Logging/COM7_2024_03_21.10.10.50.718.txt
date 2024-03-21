@@ -1,0 +1,23 @@
+KACAT Mission Control
+Waiting for RADIO handshakeTelemetry: OK
+$Telemetry: OK
+Frequency: radio get freq
+868000000
+
+Bandwidth: radio get bw
+125
+
+Sync word: radio get sync
+34
+
+Spreading factor: radio get sf
+sf7
+
+Chirp rate: radio get cr
+4/5
+
+Radio info:
+Starting flight
+broadcasting
+sending telemetry
+GPS: OK
