@@ -119,10 +119,14 @@ voc_plot = fig.add_subplot(347)
 voc_plot.set_xlabel('altitude (m)')
 voc_plot.set_ylabel('voc index')
 
-def read_and_process_data():
+def read_and_process_data(fromHex = False):
     """ Reads data from serial port and appends data to each appropriate list
     """
     line = kacat.readline().decode('utf-8').strip() # TODO: save data to file
+    if fromHex:
+        if (line.startswith("radio_rx ")):
+            line = line[len("radio_rx "):].strip()
+            line = bytes.fromhex(line).decode('utf-8')
     telemetryData = line.split(',')
 
     time_data.append(float(telemetryData[1]))
