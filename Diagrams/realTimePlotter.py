@@ -1,4 +1,13 @@
 import pip
+def install(package):
+    """ Installs dependencies
+
+        :param package:
+            The name of the package to install
+        :returns:
+            None
+    """
+    pip.main(['install', package])
 try:
     import serial
 except ImportError:
@@ -13,8 +22,6 @@ except ImportError:
 from matplotlib.animation import FuncAnimation
 import numpy as np
 from os import system
-def install(package):
-    pip.main(['install', package])
 
 def serial_ports():
     """ Lists serial port names
@@ -113,6 +120,8 @@ voc_plot.set_xlabel('altitude (m)')
 voc_plot.set_ylabel('voc index')
 
 def read_and_process_data():
+    """ Reads data from serial port and appends data to each appropriate list
+    """
     line = kacat.readline().decode('utf-8').strip() # TODO: save data to file
     telemetryData = line.split(',')
 
@@ -159,6 +168,7 @@ def read_and_process_data():
     print("Gyroscope Z: ",gyroscopeZ_data[-1])
     # VOC
     print("VOC index: ",vocIndex_data[-1])
+    print("\n~~~~~~\n")
 
 def update_plot(frame):
     read_and_process_data()
