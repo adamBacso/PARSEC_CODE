@@ -1,0 +1,100 @@
+44.29*0
+Decimal places: 5
+Decimal part: 28571
+2eff86eb*0
+44.29*1
+Decimal places: 5
+Decimal part: 28571
+2eff86eb*1
+45.00*2
+Decimal places: 0
+Decimal part: 0
+30ff0*2
+45.00*3
+Decimal places: 0
+Decimal part: 0
+30ff0*3
+45.00*4
+Decimal places: 0
+Decimal part: 0
+30ff0*4
+45.00*5
+Decimal places: 0
+Decimal part: 0
+30ff0*5
+45.00*6
+Decimal places: 0
+Decimal part: 0
+30ff0*6
+45.00*7
+Decimal places: 0
+Decimal part: 0
+30ff0*7
+45.00*8
+Decimal places: 0
+Decimal part: 0
+30ff0*8
+45.00*9
+Decimal places: 0
+Decimal part: 0
+30ff0*9
+45.00*10
+Decimal places: 0
+Decimal part: 0
+30ff0*a
+45.00*11
+Decimal places: 0
+Decimal part: 0
+30ff0*b
+45.00*12
+Decimal places: 0
+Decimal part: 0
+30ff0*c
+45.00*13
+Decimal places: 0
+Decimal part: 0
+30ff0*d
+45.71*14
+Decimal places: 5
+Decimal part: 71428
+30ff1626d*e
+45.71*15
+Decimal places: 5
+Decimal part: 71428
+30ff1626d*10
+45.71*16
+Decimal places: 5
+Decimal part: 71428
+30ff1626d*11
+45.71*17
+Decimal places: 5
+Decimal part: 71428
+30ff1626d*12
+45.71*18
+Decimal places: 5
+Decimal part: 71428
+30ff1626d*13
+45.71*19
+Decimal places: 5
+Decimal part: 71428
+30ff1626d*14
+45.71*20
+Decimal places: 5
+Decimal part: 71428
+30ff1626d*15
+46.43*21
+Decimal places: 5
+Decimal part: 42856
+31ffca71*16
+45.71*22
+Decimal places: 5
+Decimal part: 71428
+30ff1626d*17
+46.43*23
+Decimal places: 5
+Decimal part: 42856
+31ffca71*18
+46.43*24
+Decimal places: 5
+Decimal part: 42856
+31ffca71*19

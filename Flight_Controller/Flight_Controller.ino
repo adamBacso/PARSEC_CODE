@@ -59,7 +59,7 @@ int radioBitrate = 115200;
 const String telemetryPreamble = "radio_rx ";
 const String commandPreamble = "CMD";
 const char separator = ',';
-const char checksumIdentifier = '*';
+const String checksumIdentifier = "fff";
 
 // SENSORS
 Adafruit_BME280 bme; int bmeAddress = 0x76;
@@ -163,7 +163,7 @@ void send_request(String command){
 }
 
 void send(String data){
-    COMMS_SERIAL.println("radio tx "+string_to_hex(data)+" 1");
+    COMMS_SERIAL.println("radio tx "+data+" 1");
     sd_write(data);
     COMMS_SERIAL.clear();
 }
@@ -407,7 +407,8 @@ int packetCount = 0;
 float sleepAmount;
 
 String printBuffer = "";
-float transmissionSize;
+String radioTelemetry = "";
+int transmissionSize;
 
 void telemetry_begin(void){
     sleepAmount = 1000;
@@ -421,6 +422,21 @@ void telemetry_begin(void){
 void prints(String data){
     String dataBlock = data + separator;
     printBuffer += dataBlock;
+}
+
+void prints(int data){
+    printBuffer += String(data) + separator;
+    radioTelemetry += get_pentadecimal(data) + "f";
+}
+
+void prints(float data, int precision = 0){
+    printBuffer += String(data) + separator;
+    radioTelemetry += get_pentadecimal(data, precision) + "f";
+}
+
+void prints(double data){
+    printBuffer += String(data) + separator;
+    radioTelemetry += get_pentadecimal((float)data) + "f";
 }
 
 String string_to_hex(String data){
@@ -479,35 +495,38 @@ void telemetry_send(void){
     //}
     transmissionSize = 0;
     printBuffer = "";
+    radioTelemetry = "";
 
-    prints(String(packetCount++));                                          // packet count
-    prints(String(get_time()));                                             // current mission time
+    // HEADER
+
+    prints(packetCount++);                                          // packet count
+    prints(get_time(),2);                                             // current mission time
 
     // SYSTEM
-    prints(tempmonGetTemp());                                               // internal temperature
+    prints(tempmonGetTemp(),1);                                               // internal temperature
 
-    // GPS - WLR089u0
-    ////if (gps.location.isValid()){
-        prints(String(gps.location.lat(),6U));                                 // latitude
-        prints(String(gps.location.lng(),6U));                                 // longitude
-        prints(String(course_to_target(),6U));                                 // course to target
-    //}else{
-    //    for (int i = 0; i<5; i++){
-    //        prints("#");
-    //    }
-    //}
+    // GPS
+    if (gps.location.isValid()){
+        prints(gps.location.lat(),6);                                 // latitude
+        prints(gps.location.lng(),6);                                 // longitude
+        prints(course_to_target(),6);                                 // course to target
+    }else{
+        for (int i = 0; i<5; i++){
+            prints("a");
+        }
+    }
 
-    //if (gps.course.isValid()){
-        prints(String(gps.course.deg(),6U));                                   // current course
-    //}else{
-    //    prints("#");
-    //}
+    if (gps.course.isValid()){
+        prints(gps.course.deg(),6U);                                   // current course
+    }else{
+        prints("a");
+    }
 
-    //if (gps.altitude.isValid()){
-        prints(String(gps.altitude.meters(),6U));                              // gps altitude
-    //}else{
-    //    prints("#");
-    //}
+    if (gps.altitude.isValid()){
+        prints(gps.altitude.meters(),3);                              // gps altitude
+    }else{
+        prints("a");
+    }
     // BME280
     float temperature = 0;
     float humidity = 0;
@@ -516,57 +535,109 @@ void telemetry_send(void){
         pressure = bme.readPressure()/100;
         temperature = bme.readTemperature();
         humidity = bme.readHumidity();
+        prints(pressure,4);                                    //     pressure in hPa
+        prints(temperature,2);       
+        prints(humidity,2);                                           // humidity
     }
-    prints(String(pressure));                                    //     pressure in hPa
-    prints(String(temperature));       
-    prints(String(humidity));                                           // humidity
+    else{
+        for (int i = 0; i<3; i++){
+            prints("a");
+        }
+    }
 
     // MPU-6050
     if (mpu.begin(mpuAddress)){
         sensors_event_t a, g, temp;
         mpu.getEvent(&a, &g, &temp);
         // acceleration
-        prints(String(a.acceleration.x));                                   // acceleration x
-        prints(String(a.acceleration.y));                                   // acceleration y
-        prints(String(a.acceleration.z));                                   // acceleration z
+        prints(a.acceleration.x,3);                                   // acceleration x
+        prints(a.acceleration.y,3);                                   // acceleration y
+        prints(a.acceleration.z,3);                                   // acceleration z
         // gyroscope
-        prints(String(g.gyro.x));                                           // gyro x
-        prints(String(g.gyro.y));                                           // gyro y
-        prints(String(g.gyro.z));                                           // gyro z
+        prints(g.gyro.x,3);                                           // gyro x
+        prints(g.gyro.y,3);                                           // gyro y
+        prints(g.gyro.z,3);                                           // gyro z
     }// temperature
     else{
         for (int i = 0; i<6; i++){
-            prints("");
+            prints("a");
         }
     }
 
     // SGP40
-    //bool sgpAvailable = sgp.begin(&Wire1);
+    bool sgpAvailable = sgp.begin(&Wire1);
     //Serial.println((String)"SGP state: "+sgpAvailable);
-    // if (sgpAvailable){
-    prints(String(sgp.measureVocIndex(temperature,humidity)));          // voc index based on temperature and humidity
-    //} else {
-    //    for (int i = 0; i<2; i++){
-    //        prints("#");
-    //    }
-    //}
-    prints(String(sleepAmount));                                            // sleep time
+    if (sgpAvailable){
+    prints((int)sgp.measureVocIndex(temperature,humidity));          // voc index based on temperature and humidity
+    } else {
+        for (int i = 0; i<2; i++){
+            prints("a");
+        }
+    }
+    prints(sleepAmount,3);                                            // sleep time
 
     // CHECKSUM
-    String checksum = get_checksum(printBuffer);                            // checksum
-    printBuffer += checksumIdentifier+checksum;
+    String checksum = get_checksum(radioTelemetry);                            // checksum
+    radioTelemetry += checksumIdentifier+checksum;
     transmissionSize += printBuffer.length();
     transmissionSize *= 8;
-    prints(String(transmissionSize));                                      // transmission size
-    send(printBuffer);
+    prints(transmissionSize);                                      // transmission size
+    send(radioTelemetry);
     Serial.println(printBuffer);
 }
 
 String get_checksum(String data){
-    unsigned int checksum = CRC32::calculate(data.c_str(), data.length());
-    char checksumStr[3];
-    snprintf(checksumStr, sizeof(checksumStr), "%02X", checksum);
-    return String(checksumStr);
+    int checksum = 0;
+    for (size_t i = 0; i < data.length(); ++i) {
+        checksum ^= static_cast<int>(data.charAt(i));
+    }
+    return String(checksum);
+}
+
+String get_pentadecimal(int number){
+    return String(number, 15);
+}
+String get_pentadecimal(float number, int precision = 0){
+    int wholePart = (int)number;
+    float decimalNumber = (number - wholePart);
+    int decimalPlaces = get_decimal_places(number);
+    if (decimalPlaces > precision){
+        decimalPlaces = precision;
+    }
+    Serial.println((String)"Decimal places: "+String(decimalPlaces));
+    int decimalPart = decimalNumber * pow(10, decimalPlaces);
+
+    Serial.println((String)"Decimal part: "+String(decimalPart));
+    String output = "";
+    output += get_pentadecimal(wholePart);
+    if (precision > 0){
+        output += "ff";
+        for (int i = 0; i < get_leading_zeros(decimalPart, decimalPlaces); i++){
+            output += "0";
+        }
+        output += get_pentadecimal(decimalPart);
+    }
+    return output;
+
+}
+
+int get_decimal_places(float number){
+    int counter = 0;
+    while (number != (int)number){
+        number *= 10;
+        counter++;
+    }
+    return counter;
+}
+
+int get_leading_zeros(int number, int decimalPlaces){
+    int target = pow(10, decimalPlaces-1);
+    int counter = 0;
+    while (target-number>0){
+        number *= 10;
+        counter++;
+    }
+    return counter;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -801,15 +872,6 @@ void capture_command(){
             send(command);
             handle_command(command.substring(3));
         }
-    }
-}
-
-bool checksum_invalid(String data){
-    String checksum = data.substring(data.indexOf(checksumIdentifier));
-    if (get_checksum(data)==checksum){
-        return false;
-    } else {
-        return true;
     }
 }
 
