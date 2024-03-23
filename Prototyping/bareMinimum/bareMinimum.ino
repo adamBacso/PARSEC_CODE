@@ -10,6 +10,8 @@ void setup(){
 
 int counter = 0;
 void loop(){
+    Serial.print(tempmonGetTemp());
+    Serial.print("*");
     Serial.println(counter++);
     delay(500);
     ledState = !ledState;

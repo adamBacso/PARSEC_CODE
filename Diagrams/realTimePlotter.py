@@ -125,11 +125,15 @@ def read_and_process_data(fromHex = False):
         :param fromHex:
             Whether or not the data is in hex
     """
-    line = kacat.readline().decode('utf-8').strip() # TODO: save data to file
+    try:
+        line = kacat.readline().decode('utf-8').strip() # TODO: save data to file
+    except SerialException:
+        print("Serial device disconnected. Exiting...")
+        return
     if fromHex:
         if (line.startswith("radio_rx ")):
             line = line[len("radio_rx "):].strip()
-            line = bytes.fromhex(line).decode('utf-8')
+            line = bytes.fromhex(line).decode('ascii')
     telemetryData = line.split(',')
 
     time_data.append(float(telemetryData[1]))
@@ -223,5 +227,6 @@ def update_plot(frame):
     voc_plot.clear()
     voc_plot.plot(altitude_data, vocIndex_data, label="voc index")
 
-ani = FuncAnimation(fig, update_plot, interval=10, save_count=100)
-plt.show()
+#ani = FuncAnimation(fig, update_plot, interval=10, save_count=100)
+#plt.show()
+read_and_process_data()
