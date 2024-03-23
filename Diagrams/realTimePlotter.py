@@ -1,11 +1,47 @@
-import matplotlib.pyplot as plt
+import pip
+try:
+    import serial
+except ImportError:
+    install('pyserial')
+    import serial
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    install('matplotlib')
+    import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
-import serial
 from os import system
+def install(package):
+    pip.main(['install', package])
 
-S_PORT = 'COM7'
+def serial_ports():
+    """ Lists serial port names
+
+        :raises EnvironmentError:
+            On unsupported or unknown platforms
+        :returns:
+            A list of the serial ports available on the system
+    """
+    ports = ['COM%s' % (i + 1) for i in range(256)]
+
+    result = []
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            result.append(port)
+        except (OSError, serial.SerialException):
+            pass
+    return result
+
+availablePorts = serial_ports()
+print(availablePorts)
+index = int(input())
+S_PORT = availablePorts[index]
 S_BAUD = 9600
+
 
 kacat = serial.Serial(S_PORT, S_BAUD)
 
@@ -98,7 +134,6 @@ def read_and_process_data():
     gyroscopeZ_data.append(float(telemetryData[17]))
     vocIndex_data.append(float(telemetryData[18]))
 
-    system('cls')
     print("Telemetry ID: ", telemetryData[0])
     print("Time: ",time_data[-1])
     # POSITION
