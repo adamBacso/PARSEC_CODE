@@ -92,15 +92,15 @@ void kacat_init(void){
     Serial.println(F("KACAT Mission Control"));
     Serial.print(F("Waiting for RADIO handshake"));
     sd_begin();
-    //config();
-    //auto_radio_setup();
+    config();
+    auto_radio_setup();
     telemetry_begin();
     get_radio_info();
-    //servo_begin();
-    //gps_begin();
-    //callibrate_altitude();
-    //guidance_begin();
-    //if (Serial){
+    servo_begin();
+    gps_begin();
+    callibrate_altitude();
+    guidance_begin();
+    //if (!Serial){
         inFlight = true;
     Serial.println("Starting flight");
     //} else {
@@ -280,13 +280,11 @@ void sd_begin(void){
 }
 
 void sd_write(String data){
-    /*
     flightLog = SD.open(logName.c_str(), FILE_WRITE);
     if (flightLog){
         flightLog.println(data.c_str());
     }
     flightLog.close();
-    */
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -460,9 +458,8 @@ void broadcast_data(void){
             //Serial.println(gpsData);
         //}
         telemetry_send();
-        //set_sleep_amount();
-        delay(1000);
-        //threads.delay(sleepAmount);
+        set_sleep_amount();
+        threads.delay(sleepAmount);
     }
 }
 
@@ -563,7 +560,6 @@ void telemetry_send(void){
     prints(String(transmissionSize));                                      // transmission size
     send(printBuffer);
     Serial.println(printBuffer);
-    sd_write(printBuffer);
 }
 
 String get_checksum(String data){
@@ -851,7 +847,6 @@ void pull_line_amount(float lineLength){
 
 void servo_begin(void){
     analogWriteFrequency(servoPin,servoFrequency);
-    servo_stop();
     servo_zero();
     Serial.println("Servo:");
     Serial.println((String)"\tClockwise speed: "+clockwise);
@@ -1008,9 +1003,8 @@ void setup(){
     sgp.selfTest();
     kacat_init();
     if (inFlight){
-        broadcast_data();
-        //threads.addThread(broadcast_data);
-        //threads.addThread(descent_guidance);
+        threads.addThread(broadcast_data);
+        threads.addThread(descent_guidance);
     } else {
         receive();
         handle_incoming_data();

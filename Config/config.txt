@@ -1,4 +1,4 @@
-*Parsec* KACAT config v18.03.2024 14:37 ~BÁ #1.Change header on each change; 2.Only change the lines under a 'v'; 3. DO NOT CHANGE THE FILE NAME!!!
+*Parsec* KACAT config v23.03.2024 09:26 ~BÁ #1.Change header on each change; 2.Only change the lines under a 'v'; 3. DO NOT CHANGE THE FILE NAME!!!
 v -frequency
 868000000
 v -syncWord
