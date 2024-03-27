@@ -48,13 +48,13 @@ int counterclockwise = 120;
 
 // RADIO
 int commsBaudRate = 115200;
-float percentActive = 10;
+int percentActive = 10;
 int radioFrequency = 868000000; // in Hz
 int syncWord = 34;
 int radioBandwidth = 125;
 int spreadingFactor = 7;
 float chirpRate = 4.0/5.0;
-int radioBitrate = 115200;
+int radioBitrate = 5500;
 // _telemetry
 const String telemetryPreamble = "radio_rx ";
 const String commandPreamble = "CMD";
@@ -97,9 +97,9 @@ void kacat_init(void){
     telemetry_begin();
     get_radio_info();
     servo_begin();
-    gps_begin();
-    callibrate_altitude();
-    guidance_begin();
+    //gps_begin();
+    //callibrate_altitude();
+    //guidance_begin();
     //if (!Serial){
         inFlight = true;
     Serial.println("Starting flight");
@@ -112,23 +112,30 @@ void kacat_init(void){
 void config(void) {
     File config = SD.open("config.txt", FILE_READ);
     if (config){
-        config.read(); // 1
-        config.read(); // 2
-        radioFrequency = (int)config.readString().toInt(); // 3
-        config.read(); // 4
-        syncWord = (int)config.readString().toInt(); // 5
-        config.read(); // 6
-        radioBandwidth = (int)config.readString().toInt(); // 7
-        config.read(); // 8
-        spreadingFactor = (int)config.readString().toInt(); // 9
-        config.read(); // 10
-        courseDeviationThreshold = config.readString().toFloat(); // 11
-        config.read(); // 12
-        guidanceAltitudeThreshold = (int)config.readString().toInt(); // 13
-        config.read(); // 14
-        targetLatitude = (double)config.readString().toFloat(); // 15
-        config.read(); // 16
-        targetLongitude = (double)config.readString().toFloat(); // 17
+        Serial.println(config.readStringUntil('\n',200)); // 1
+        config.readStringUntil('\n'); // 2
+        String frequencyString = config.readStringUntil('\n');
+        Serial.println(frequencyString);
+        radioFrequency = (int)frequencyString.toInt(); // 3
+        config.readStringUntil('\n'); // 4
+        syncWord = (int)config.readStringUntil('\n').toInt(); // 5
+        config.readStringUntil('\n'); // 6
+        radioBandwidth = (int)config.readStringUntil('\n').toInt(); // 7
+        config.readStringUntil('\n'); // 8
+        spreadingFactor = (int)config.readStringUntil('\n').toInt(); // 9
+        config.readStringUntil('\n'); // 10
+        courseDeviationThreshold = config.readStringUntil('\n').toFloat(); // 11
+        config.readStringUntil('\n'); // 12
+        guidanceAltitudeThreshold = (int)config.readStringUntil('\n').toInt(); // 13
+        config.readStringUntil('\n'); // 14
+        targetLatitude = config.readStringUntil('\n').toFloat(); // 15
+        config.readStringUntil('\n'); // 16
+        targetLongitude = config.readStringUntil('\n').toFloat(); // 17
+        config.readStringUntil('\n'); // 18
+        String percentActiveString = config.readStringUntil('\n');
+        Serial.println(percentActiveString);
+        percentActive = (int)percentActiveString.toInt(); // 19
+        Serial.println(percentActive);
         config.close();
     }
     else{
@@ -226,6 +233,7 @@ void manual_radio_setup(void){
     }
 }
 void send_command(String command){
+    sd_write(command);
     Serial.println(command);
     COMMS_SERIAL.println(command);
     while (COMMS_SERIAL.available()<=0);
@@ -240,7 +248,7 @@ void auto_radio_setup(void){
     send_command(String("radio rxstop"));
     send_command(String("radio set freq "+String(radioFrequency)));
     send_command(String("radio set bw "+String(radioBandwidth)));
-    send_command(String("radio set sf "+String(spreadingFactor)));
+    send_command(String("radio set sf sf"+String(spreadingFactor)));
     send_command(String("radio set sync "+String(syncWord)));
     delay(1000);
     COMMS_SERIAL.clear();
@@ -254,11 +262,6 @@ int get_chipSelect(void){
 }
 
 void sd_begin(void){
-    pinMode(chipSelect, OUTPUT);
-    pinMode(11, OUTPUT);
-    pinMode(12, INPUT);
-    pinMode(13, OUTPUT);
-    digitalWrite(chipSelect,HIGH);
     Serial.print("Initializing SD card...");
     //pinMode(chipSelect,OUTPUT);
 
@@ -271,7 +274,13 @@ void sd_begin(void){
         }
         logName = logName+fileIndex+logType;
         Serial.println((String)"\tFile Name: "+logName);
-        sd_write("");
+        File logFile = SD.open(logName.c_str(), FILE_WRITE);
+        logFile.close();
+        if (SD.exists(logName.c_str())){
+            Serial.println((String)"\tFile Created: "+logName);
+        } else {
+            Serial.println((String)"\tFile Creation Failed: "+logName);
+        }
     } else {
         Serial.print("__ERROR__: ");
         Serial.println("Card failed, or not present");
@@ -389,7 +398,7 @@ String get_timestamp(void){
 
 
 float get_time(void){
-    return float(millis()-missionStartTime)/1000;
+    return (millis()-missionStartTime)/1000.0;
 }
 
 void true_sleep(int milli){
@@ -418,25 +427,88 @@ void telemetry_begin(void){
     Serial.println("Telemetry: OK");
     send("$Telemetry: OK");
 }
+String get_pentadecimal(int number){
+    return String(number, 15);
+}
+String get_pentadecimal(float number, int precision = 0){
+    int wholePart = (int)number;
+    float decimalNumber = (number - wholePart);
+    int decimalPlaces = get_decimal_places(number);
+    if (decimalPlaces > precision){
+        decimalPlaces = precision;
+    }
+    int decimalPart = decimalNumber * pow(10, decimalPlaces);
+    String output = "";
+    output += get_pentadecimal(wholePart);
+    if (precision > 0){
+        output += "ff";
+        for (int i = 0; i < get_leading_zeros(decimalPart, decimalPlaces); i++){
+            output += "0";
+        }
+        output += get_pentadecimal(decimalPart);
+    }
+    return output;
+
+}
+
+int get_decimal_places(float number){
+    int counter = 0;
+    while (number != (int)number){
+        number *= 10;
+        counter++;
+    }
+    return counter;
+}
+
+int get_leading_zeros(int number, int decimalPlaces){
+    int counter = 0;
+    if (decimalPlaces > 1){
+        int target = pow(10, decimalPlaces-1);
+        while (target-number>0){
+            number *= 10;
+            counter++;
+        }
+    } else {
+        if (number == 0){
+            counter = 1;
+        } else {
+            counter = 0;
+        }
+    }
+    return counter;
+}
+void add_to_print_buffer(String data){
+    printBuffer += data;
+    printBuffer += separator;
+}
+
+void add_to_print_buffer(int data){
+    printBuffer += String(data);
+    printBuffer += separator;
+}
+
+void add_to_print_buffer(float data, int precision = 0){
+    printBuffer += String(data, precision);
+    printBuffer += separator;
+}
 
 void prints(String data){
-    String dataBlock = data + separator;
-    printBuffer += dataBlock;
+    add_to_print_buffer(data);
 }
 
 void prints(int data){
-    printBuffer += String(data) + separator;
+    add_to_print_buffer(data);
     radioTelemetry += get_pentadecimal(data) + "f";
 }
 
 void prints(float data, int precision = 0){
-    printBuffer += String(data) + separator;
+    add_to_print_buffer(data, precision);
     radioTelemetry += get_pentadecimal(data, precision) + "f";
 }
 
-void prints(double data){
-    printBuffer += String(data) + separator;
-    radioTelemetry += get_pentadecimal((float)data) + "f";
+void prints(double data, int precision = 0){
+    add_to_print_buffer((float)data, precision);
+    radioTelemetry += get_pentadecimal((float)data, precision) + "f";
 }
 
 String string_to_hex(String data){
@@ -476,12 +548,15 @@ void broadcast_data(void){
         telemetry_send();
         set_sleep_amount();
         threads.delay(sleepAmount);
+        //delay(sleepAmount);
     }
 }
 
 void set_sleep_amount(void){
-    uint16_t transmissionTime = (transmissionSize / radioBitrate) * 1000;
-    sleepAmount = (transmissionTime/percentActive)*(100-percentActive);
+    int transmissionTime = (transmissionSize / (float)radioBitrate) * 1000;
+    sleepAmount = 0;
+    sleepAmount = (float)transmissionTime / (float)percentActive;
+    sleepAmount *= (100-percentActive);
 }
 
 void radio_bitrate(void){
@@ -499,17 +574,19 @@ void telemetry_send(void){
 
     // HEADER
 
-    prints(packetCount++);                                          // packet count
-    prints(get_time(),2);                                             // current mission time
+    add_to_print_buffer(packetCount++);                                          // packet count
+    prints(get_time(),1);                                             // current mission time
 
     // SYSTEM
-    prints(tempmonGetTemp(),1);                                               // internal temperature
+
+    add_to_print_buffer(tempmonGetTemp(),1);                                               // internal temperature
 
     // GPS
+
     if (gps.location.isValid()){
         prints(gps.location.lat(),6);                                 // latitude
         prints(gps.location.lng(),6);                                 // longitude
-        prints(course_to_target(),6);                                 // course to target
+        add_to_print_buffer(course_to_target(),6);                                 // course to target
     }else{
         for (int i = 0; i<5; i++){
             prints("a");
@@ -517,17 +594,18 @@ void telemetry_send(void){
     }
 
     if (gps.course.isValid()){
-        prints(gps.course.deg(),6U);                                   // current course
+        add_to_print_buffer(gps.course.deg(),6U);                                   // current course
     }else{
         prints("a");
     }
 
     if (gps.altitude.isValid()){
-        prints(gps.altitude.meters(),3);                              // gps altitude
+        prints(gps.altitude.meters(),2);                              // gps altitude
     }else{
         prints("a");
     }
     // BME280
+
     float temperature = 0;
     float humidity = 0;
     float pressure = 0;
@@ -537,7 +615,7 @@ void telemetry_send(void){
         humidity = bme.readHumidity();
         prints(pressure,4);                                    //     pressure in hPa
         prints(temperature,2);       
-        prints(humidity,2);                                           // humidity
+        add_to_print_buffer(humidity,2);                                           // humidity
     }
     else{
         for (int i = 0; i<3; i++){
@@ -546,17 +624,18 @@ void telemetry_send(void){
     }
 
     // MPU-6050
+
     if (mpu.begin(mpuAddress)){
         sensors_event_t a, g, temp;
         mpu.getEvent(&a, &g, &temp);
         // acceleration
-        prints(a.acceleration.x,3);                                   // acceleration x
-        prints(a.acceleration.y,3);                                   // acceleration y
-        prints(a.acceleration.z,3);                                   // acceleration z
+        add_to_print_buffer(a.acceleration.x,3);                                   // acceleration x
+        add_to_print_buffer(a.acceleration.y,3);                                   // acceleration y
+        add_to_print_buffer(a.acceleration.z,3);                                   // acceleration z
         // gyroscope
-        prints(g.gyro.x,3);                                           // gyro x
-        prints(g.gyro.y,3);                                           // gyro y
-        prints(g.gyro.z,3);                                           // gyro z
+        add_to_print_buffer(g.gyro.x,3);                                           // gyro x
+        add_to_print_buffer(g.gyro.y,3);                                           // gyro y
+        add_to_print_buffer(g.gyro.z,3);                                           // gyro z
     }// temperature
     else{
         for (int i = 0; i<6; i++){
@@ -565,23 +644,23 @@ void telemetry_send(void){
     }
 
     // SGP40
+
     bool sgpAvailable = sgp.begin(&Wire1);
     //Serial.println((String)"SGP state: "+sgpAvailable);
     if (sgpAvailable){
-    prints((int)sgp.measureVocIndex(temperature,humidity));          // voc index based on temperature and humidity
+        prints((int)sgp.measureVocIndex(temperature,humidity));          // voc index based on temperature and humidity
     } else {
-        for (int i = 0; i<2; i++){
-            prints("a");
-        }
+        prints("a");
     }
-    prints(sleepAmount,3);                                            // sleep time
+    add_to_print_buffer(sleepAmount,3);                                            // sleep time
 
     // CHECKSUM
+
     String checksum = get_checksum(radioTelemetry);                            // checksum
     radioTelemetry += checksumIdentifier+checksum;
-    transmissionSize += printBuffer.length();
+    transmissionSize += radioTelemetry.length();
     transmissionSize *= 8;
-    prints(transmissionSize);                                      // transmission size
+    Serial.println("Sending telemetry: "+radioTelemetry);
     send(radioTelemetry);
     Serial.println(printBuffer);
 }
@@ -594,51 +673,7 @@ String get_checksum(String data){
     return String(checksum);
 }
 
-String get_pentadecimal(int number){
-    return String(number, 15);
-}
-String get_pentadecimal(float number, int precision = 0){
-    int wholePart = (int)number;
-    float decimalNumber = (number - wholePart);
-    int decimalPlaces = get_decimal_places(number);
-    if (decimalPlaces > precision){
-        decimalPlaces = precision;
-    }
-    Serial.println((String)"Decimal places: "+String(decimalPlaces));
-    int decimalPart = decimalNumber * pow(10, decimalPlaces);
 
-    Serial.println((String)"Decimal part: "+String(decimalPart));
-    String output = "";
-    output += get_pentadecimal(wholePart);
-    if (precision > 0){
-        output += "ff";
-        for (int i = 0; i < get_leading_zeros(decimalPart, decimalPlaces); i++){
-            output += "0";
-        }
-        output += get_pentadecimal(decimalPart);
-    }
-    return output;
-
-}
-
-int get_decimal_places(float number){
-    int counter = 0;
-    while (number != (int)number){
-        number *= 10;
-        counter++;
-    }
-    return counter;
-}
-
-int get_leading_zeros(int number, int decimalPlaces){
-    int target = pow(10, decimalPlaces-1);
-    int counter = 0;
-    while (target-number>0){
-        number *= 10;
-        counter++;
-    }
-    return counter;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////
 // ~INCOMING DATA HANDLING
@@ -1066,7 +1101,7 @@ void setup(){
     kacat_init();
     if (inFlight){
         threads.addThread(broadcast_data);
-        threads.addThread(descent_guidance);
+        //threads.addThread(descent_guidance);
     } else {
         receive();
         handle_incoming_data();
