@@ -541,12 +541,15 @@ uint32_t elapsedTime;
 void broadcast_data(void){
     //flash();
     while (1){
+        //Serial.println("broadcasting");
         //String gpsData = GPS_SERIAL.readString();
         //if (gpsData.startsWith("$GPGGA")){
             //Serial.println(gpsData);
         //}
         telemetry_send();
+        //Serial.println("telemetry sent");
         set_sleep_amount();
+        Serial.println("sleeping "+String(sleepAmount));
         threads.delay(sleepAmount);
         //delay(sleepAmount);
     }
