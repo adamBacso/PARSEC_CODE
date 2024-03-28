@@ -538,22 +538,7 @@ String hex_to_string(String hexString){
 }
 
 uint32_t elapsedTime;
-void broadcast_data(void){
-    //flash();
-    while (1){
-        //Serial.println("broadcasting");
-        //String gpsData = GPS_SERIAL.readString();
-        //if (gpsData.startsWith("$GPGGA")){
-            //Serial.println(gpsData);
-        //}
-        telemetry_send();
-        //Serial.println("telemetry sent");
-        set_sleep_amount();
-        Serial.println("sleeping "+String(sleepAmount));
-        threads.delay(sleepAmount);
-        //delay(sleepAmount);
-    }
-}
+
 
 void set_sleep_amount(void){
     int transmissionTime = (transmissionSize / (float)radioBitrate) * 1000;
@@ -565,6 +550,71 @@ void set_sleep_amount(void){
 void radio_bitrate(void){
     radioBitrate = spreadingFactor * (radioBandwidth*1000/pow(2,spreadingFactor)) * chirpRate;
 }
+
+volatile float internalTemperature = 0;
+volatile double longitude = 0;
+volatile double latitude = 0;
+volatile double courseToTarget = 0;
+volatile double currentCourse = 0;
+volatile double distanceToTarget = 0;
+volatile double gpsAltitude = 0;
+volatile float pressure = 0;
+volatile float temperature = 0;
+volatile float humidity = 0;
+volatile float accelerationX = 0;
+volatile float accelerationY = 0;
+volatile float accelerationZ = 0;
+volatile float gyroscopeX = 0;
+volatile float gyroscopeY = 0;
+volatile float gyroscopeZ = 0;
+volatile int sgpVocIndex = 0;
+
+void collect_sensor_data(void){
+    internalTemperature = tempmonGetTemp();
+    longitude = gps.location.lng();
+    latitude = gps.location.lat();
+    courseToTarget = course_to_target();
+    currentCourse = gps.course.deg();
+    distanceToTarget = distance_to_target();
+    gpsAltitude = gps.altitude.meters();
+    if (bme.begin(bmeAddress)){
+        pressure = bme.readPressure();
+        temperature = bme.readTemperature();
+        humidity = bme.readHumidity();
+    }
+    else {
+        pressure = 0;
+        temperature = 0;
+        humidity = 0;
+    }
+
+    if (mpu.begin(mpuAddress)){
+        sensors_event_t a, g, temp;
+        mpu.getEvent(&a, &g, &temp);
+
+        accelerationX = a.acceleration.x;
+        accelerationY = a.acceleration.y;
+        accelerationZ = a.acceleration.z;
+        gyroscopeX = g.gyro.x;
+        gyroscopeY = g.gyro.y;
+        gyroscopeZ = g.gyro.z;
+    }
+    else {
+        accelerationX = 0;
+        accelerationY = 0;
+        accelerationZ = 0;
+        gyroscopeX = 0;
+        gyroscopeY = 0;
+        gyroscopeZ = 0;
+    }
+
+    if (sgp.begin(&Wire1)){
+        sgpVocIndex = (int)sgp.measureVocIndex(temperature,humidity);
+    }
+
+    threads.yield();
+} 
+    
 
 const String telemetryDataNames = "packetCount,missionTime,internalTemperature,gpsAge,latitude,longitude,courseToTarget,distanceToTarget,currentCourse,gpsAltitude,barometricAltitude,bmeTemperature,humidity,accelerationX,accelerationY,accelerationZ,gyroscopeX,gyroscopeY,gyroscopeZ,mpuTemperature,sgpRawVoc,sgpVocIndex,uptime,sleepTime,checksum,transmissionSize";
 void telemetry_send(void){
@@ -582,14 +632,14 @@ void telemetry_send(void){
 
     // SYSTEM
 
-    add_to_print_buffer(tempmonGetTemp(),1);                                               // internal temperature
+    add_to_print_buffer(internalTemperature,1);                                               // internal temperature
 
     // GPS
 
     if (gps.location.isValid()){
-        prints(gps.location.lat(),6);                                 // latitude
-        prints(gps.location.lng(),6);                                 // longitude
-        add_to_print_buffer(course_to_target(),6);                                 // course to target
+        prints(latitude,6);                                 // latitude
+        prints(longitude,6);                                 // longitude
+        add_to_print_buffer(courseToTarget,6);                                 // course to target
     }else{
         for (int i = 0; i<5; i++){
             prints("a");
@@ -597,25 +647,19 @@ void telemetry_send(void){
     }
 
     if (gps.course.isValid()){
-        add_to_print_buffer(gps.course.deg(),6U);                                   // current course
+        add_to_print_buffer(currentCourse,6U);                                   // current course
     }else{
         prints("a");
     }
 
     if (gps.altitude.isValid()){
-        prints(gps.altitude.meters(),2);                              // gps altitude
+        prints(gpsAltitude,2);                              // gps altitude
     }else{
         prints("a");
     }
     // BME280
 
-    float temperature = 0;
-    float humidity = 0;
-    float pressure = 0;
     if (bme.begin(bmeAddress)){
-        pressure = bme.readPressure()/100;
-        temperature = bme.readTemperature();
-        humidity = bme.readHumidity();
         prints(pressure,4);                                    //     pressure in hPa
         prints(temperature,2);       
         add_to_print_buffer(humidity,2);                                           // humidity
@@ -629,16 +673,14 @@ void telemetry_send(void){
     // MPU-6050
 
     if (mpu.begin(mpuAddress)){
-        sensors_event_t a, g, temp;
-        mpu.getEvent(&a, &g, &temp);
         // acceleration
-        add_to_print_buffer(a.acceleration.x,3);                                   // acceleration x
-        add_to_print_buffer(a.acceleration.y,3);                                   // acceleration y
-        add_to_print_buffer(a.acceleration.z,3);                                   // acceleration z
+        add_to_print_buffer(accelerationX,3);                                   // acceleration x
+        add_to_print_buffer(accelerationY,3);                                   // acceleration y
+        add_to_print_buffer(accelerationZ,3);                                   // acceleration z
         // gyroscope
-        add_to_print_buffer(g.gyro.x,3);                                           // gyro x
-        add_to_print_buffer(g.gyro.y,3);                                           // gyro y
-        add_to_print_buffer(g.gyro.z,3);                                           // gyro z
+        add_to_print_buffer(gyroscopeX,3);                                           // gyro x
+        add_to_print_buffer(gyroscopeY,3);                                           // gyro y
+        add_to_print_buffer(gyroscopeZ,3);                                           // gyro z
     }// temperature
     else{
         for (int i = 0; i<6; i++){
@@ -648,13 +690,7 @@ void telemetry_send(void){
 
     // SGP40
 
-    bool sgpAvailable = sgp.begin(&Wire1);
-    //Serial.println((String)"SGP state: "+sgpAvailable);
-    if (sgpAvailable){
-        prints((int)sgp.measureVocIndex(temperature,humidity));          // voc index based on temperature and humidity
-    } else {
-        prints("a");
-    }
+    prints(sgpVocIndex);          // voc index based on temperature and humidity
     add_to_print_buffer(sleepAmount,3);                                            // sleep time
 
     // CHECKSUM
@@ -666,6 +702,7 @@ void telemetry_send(void){
     Serial.println("Sending telemetry: "+radioTelemetry);
     send(radioTelemetry);
     Serial.println(printBuffer);
+    sd_write(printBuffer);
 }
 
 String get_checksum(String data){
@@ -706,7 +743,23 @@ void delegate_incoming_telemetry(void){
         
     }
 }
-
+void broadcast_data(void){
+    //flash();
+    while (1){
+        //Serial.println("broadcasting");
+        //String gpsData = GPS_SERIAL.readString();
+        //if (gpsData.startsWith("$GPGGA")){
+            //Serial.println(gpsData);
+        //}
+        telemetry_send();
+        //Serial.println("telemetry sent");
+        set_sleep_amount();
+        Serial.println("sleeping "+String(sleepAmount));
+        threads.addThread(collect_sensor_data);
+        threads.delay(sleepAmount);
+        //delay(sleepAmount);
+    }
+}
 void display_incoming_data(String data){ // TODO: do something already about this!!!!
     Serial.println(data);
 }
