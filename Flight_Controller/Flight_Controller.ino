@@ -431,22 +431,28 @@ String get_pentadecimal(int number){
     return String(number, 15);
 }
 String get_pentadecimal(float number, int precision = 0){
+    //Serial.println("Getting pentadecimal");
     int wholePart = (int)number;
-    float decimalNumber = (number - wholePart);
+    float decimalNumber = number - wholePart;
+    //Serial.println(1);
     int decimalPlaces = get_decimal_places(number);
+    //Serial.println(2);
     if (decimalPlaces > precision){
         decimalPlaces = precision;
     }
     int decimalPart = decimalNumber * pow(10, decimalPlaces);
+    //Serial.println(3);
     String output = "";
     output += get_pentadecimal(wholePart);
+    //Serial.println(4);
     if (precision > 0){
         output += "ff";
-        for (int i = 0; i < get_leading_zeros(decimalPart, decimalPlaces); i++){
+        for (int i = 0; i < get_leading_zeros(decimalNumber); i++){
             output += "0";
         }
         output += get_pentadecimal(decimalPart);
     }
+    //Serial.println("determined pentadecimal");
     return output;
 
 }
@@ -460,20 +466,12 @@ int get_decimal_places(float number){
     return counter;
 }
 
-int get_leading_zeros(int number, int decimalPlaces){
+int get_leading_zeros(float number){
+    //Serial.println("getting leading zeros of " + String(number));
     int counter = 0;
-    if (decimalPlaces > 1){
-        int target = pow(10, decimalPlaces-1);
-        while (target-number>0){
-            number *= 10;
-            counter++;
-        }
-    } else {
-        if (number == 0){
-            counter = 1;
-        } else {
-            counter = 0;
-        }
+    if (number != 0){
+        float logValue = log10(number);
+        counter = static_cast<int>(ceil(-logValue))-1;
     }
     return counter;
 }
@@ -503,6 +501,7 @@ void prints(int data){
 
 void prints(float data, int precision = 0){
     add_to_print_buffer(data, precision);
+    //Serial.println("added to printBuffer");
     radioTelemetry += get_pentadecimal(data, precision) + "f";
 }
 
@@ -577,6 +576,7 @@ void collect_sensor_data(void){
     currentCourse = gps.course.deg();
     distanceToTarget = distance_to_target();
     gpsAltitude = gps.altitude.meters();
+
     if (bme.begin(bmeAddress)){
         pressure = bme.readPressure();
         temperature = bme.readTemperature();
@@ -611,8 +611,6 @@ void collect_sensor_data(void){
     if (sgp.begin(&Wire1)){
         sgpVocIndex = (int)sgp.measureVocIndex(temperature,humidity);
     }
-
-    threads.yield();
 } 
     
 
@@ -621,58 +619,64 @@ void telemetry_send(void){
     //while (!(COMMS_SERIAL.availableForWrite()>0)){
     //    threads.delay(2);
     //}
+    //Serial.println("Sending telemetry...");
     transmissionSize = 0;
     printBuffer = "";
     radioTelemetry = "";
 
     // HEADER
-
     add_to_print_buffer(packetCount++);                                          // packet count
     prints(get_time(),1);                                             // current mission time
+    Serial.println("Header: OK");
 
     // SYSTEM
-
     add_to_print_buffer(internalTemperature,1);                                               // internal temperature
+    Serial.println("System: OK");
 
     // GPS
-
-    if (gps.location.isValid()){
+    //if (gps.location.isValid()){
         prints(latitude,6);                                 // latitude
         prints(longitude,6);                                 // longitude
-        add_to_print_buffer(courseToTarget,6);                                 // course to target
-    }else{
-        for (int i = 0; i<5; i++){
-            prints("a");
-        }
-    }
+        add_to_print_buffer(courseToTarget,2);                                 // course to target
+    //}else{
+     //   for (int i = 0; i<5; i++){
+      //      prints("a");
+      //  }
+    //}
 
-    if (gps.course.isValid()){
-        add_to_print_buffer(currentCourse,6U);                                   // current course
-    }else{
-        prints("a");
-    }
+    //if (gps.course.isValid()){
+        add_to_print_buffer(currentCourse,2);                                   // current course
+    //}else{
+    //    prints("a");
+    //}
 
-    if (gps.altitude.isValid()){
+    //if (gps.altitude.isValid()){
         prints(gpsAltitude,2);                              // gps altitude
-    }else{
-        prints("a");
-    }
+    Serial.println("GPS: OK");
+    //}else{
+    //    prints("a");
+    //}
     // BME280
 
-    if (bme.begin(bmeAddress)){
+    //if (bme.begin(bmeAddress)){
+        //Serial.println("pre-pressure: "+String(pressure));
         prints(pressure,4);                                    //     pressure in hPa
+        //Serial.println("Pressure: "+String(pressure));
         prints(temperature,2);       
+        //Serial.println("Temperature: "+String(temperature));
         add_to_print_buffer(humidity,2);                                           // humidity
-    }
-    else{
-        for (int i = 0; i<3; i++){
-            prints("a");
-        }
-    }
+        //Serial.println("Humidity: "+String(humidity));
+    Serial.println("BME280: OK");
+    //}
+    //else{
+    //    for (int i = 0; i<3; i++){
+    //        prints("a");
+    //    }
+    //}
 
     // MPU-6050
 
-    if (mpu.begin(mpuAddress)){
+    //if (mpu.begin(mpuAddress)){
         // acceleration
         add_to_print_buffer(accelerationX,3);                                   // acceleration x
         add_to_print_buffer(accelerationY,3);                                   // acceleration y
@@ -681,16 +685,18 @@ void telemetry_send(void){
         add_to_print_buffer(gyroscopeX,3);                                           // gyro x
         add_to_print_buffer(gyroscopeY,3);                                           // gyro y
         add_to_print_buffer(gyroscopeZ,3);                                           // gyro z
-    }// temperature
-    else{
-        for (int i = 0; i<6; i++){
-            prints("a");
-        }
-    }
+    //}// temperature
+    //else{
+    //    for (int i = 0; i<6; i++){
+    //        prints("a");
+    //    }
+    //}
+    Serial.println("MPU6050: OK");
 
     // SGP40
 
     prints(sgpVocIndex);          // voc index based on temperature and humidity
+    Serial.println("SGP40: OK");
     add_to_print_buffer(sleepAmount,3);                                            // sleep time
 
     // CHECKSUM
@@ -701,6 +707,7 @@ void telemetry_send(void){
     transmissionSize *= 8;
     Serial.println("Sending telemetry: "+radioTelemetry);
     send(radioTelemetry);
+    //Serial.println("telemetry sent");
     Serial.println(printBuffer);
     sd_write(printBuffer);
 }
@@ -754,8 +761,10 @@ void broadcast_data(void){
         telemetry_send();
         //Serial.println("telemetry sent");
         set_sleep_amount();
-        Serial.println("sleeping "+String(sleepAmount));
+        //Serial.println("sleeping "+String(sleepAmount));
         threads.addThread(collect_sensor_data);
+        //collect_sensor_data();
+        //Serial.println("data collected");
         threads.delay(sleepAmount);
         //delay(sleepAmount);
     }
@@ -1156,6 +1165,7 @@ void setup(){
     sgp.selfTest();
     kacat_init();
     if (inFlight){
+        //broadcast_data();
         threads.addThread(broadcast_data);
         //threads.addThread(descent_guidance);
     } else {
