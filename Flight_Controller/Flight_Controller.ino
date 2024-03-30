@@ -61,6 +61,9 @@ const String commandPreamble = "CMD";
 const char separator = ',';
 const String checksumIdentifier = "fff";
 
+volatile bool dataRequest = false;
+volatile int dataCollectionDelay = 1000;
+
 // SENSORS
 int bmeAddress = 0x76;
 int mpuAddress = 0x68;
@@ -184,7 +187,6 @@ void send_request(String command){
 
 void send(String data){
     COMMS_SERIAL.println("radio tx "+data+" 1");
-    sd_write(data);
     COMMS_SERIAL.clear();
 }
 
@@ -432,6 +434,18 @@ String printBuffer = "";
 String radioTelemetry = "";
 int transmissionSize;
 
+void handle_data_requests(void){
+    while (1){
+        collect_system_data();
+        collect_gps_data();
+        collect_i2c_data();
+
+        Serial.println(millis());
+        //threads.delay(dataCollectionDelay);
+        threads.yield();
+    }
+}
+
 void telemetry_begin(void){
     sleepAmount = 1000;
     packetCount = 0;
@@ -603,13 +617,13 @@ void collect_gps_data(void){
 
 void collect_bme_data(void){
     Adafruit_BME280 bme;
-    double SEA_LEVEL_PRESSURE_HPA = (1013.25);
+    // double SEA_LEVEL_PRESSURE_HPA = (1013.25);
     if (bme.begin(bmeAddress)){
         pressure = bme.readPressure();
         temperature = bme.readTemperature();
         humidity = bme.readHumidity();
     }
-    threads.yield();
+    //threads.yield();
 }
     
 void collect_mpu_data(void){
@@ -625,19 +639,23 @@ void collect_mpu_data(void){
         gyroscopeY = g.gyro.y;
         gyroscopeZ = g.gyro.z;
     }
-    threads.yield();
+    //threads.yield();
 }
 
 void collect_sgp_data(void){
     Adafruit_SGP40 sgp;
     bool sgpAvailable = sgp.begin(&Wire1);
-    Serial.println((String)"SGP: "+sgpAvailable);
-    Serial.println(sgp.selfTest());
-    Serial.println("------");
     if (sgpAvailable){
         sgpVocIndex = static_cast<int>(sgp.measureRaw(temperature,humidity));
-        Serial.println((String)"SGP VOC raw: "+sgpVocIndex);
     }
+    //threads.yield();
+}
+
+void collect_i2c_data(void){
+    collect_bme_data();
+    collect_mpu_data();
+    collect_sgp_data();
+    dataRequest = true;
     threads.yield();
 }
 
@@ -666,7 +684,6 @@ void telemetry_send(void){
     transmissionSize *= 8;
     Serial.println("Sending telemetry: "+radioTelemetry);
     send(radioTelemetry);
-    threads.addThread(log_data);
     threads.yield();
 }
 
@@ -691,7 +708,6 @@ void log_data(void){
     add_to_print_buffer(gyroscopeY,3);
     add_to_print_buffer(gyroscopeZ,3);
     add_to_print_buffer(sgpVocIndex);
-    Serial.println(printBuffer);
     sd_write(printBuffer);
     threads.yield();
 }
@@ -705,6 +721,8 @@ String get_checksum(String data){
 }
 
 void broadcast_data(void){
+    threads.addThread(handle_data_requests);
+    dataCollectionDelay = 500;
     //flash();
     while (1){
         //Serial.println("broadcasting");
@@ -713,14 +731,10 @@ void broadcast_data(void){
             //Serial.println(gpsData);
         //}
         telemetry_send();
+        log_data();
         //Serial.println("telemetry sent");
         set_sleep_amount();
         //Serial.println("sleeping "+String(sleepAmount));
-        threads.addThread(collect_system_data);
-        threads.addThread(collect_gps_data);
-        threads.addThread(collect_bme_data);
-        threads.addThread(collect_mpu_data);
-        threads.addThread(collect_sgp_data);
         //collect_sgp_data();
         //collect_system_data();
         //Serial.println("data collected");
@@ -925,11 +939,12 @@ void confirmGuidance(void){
 
 void descent_guidance(void){
     float currentAcceleration = accelerationX;
-    while (currentAcceleration<0.5){
-        collect_mpu_data();
+    dataCollectionDelay = 100;
+    while (accelerationX<0.5){
         currentAcceleration = accelerationX;
-        threads.delay(25);
+        threads.yield();
     }
+    dataCollectionDelay = 200;
     Serial.println("##########");
     Serial.println("Liftoff!!!");
     Serial.println((String)"trigger: "+currentAcceleration);
@@ -941,7 +956,7 @@ void descent_guidance(void){
 
     bool guidanceNeeded = true;
     while (guidanceNeeded){
-        collect_system_data();
+        //collect_system_data();
         if (gps.location.isValid()){ // are we getting good data?
             if (distanceToTarget>thresholdDistanceToTarget){ // are we there yet?
                 int32_t courseDeviation = courseToTarget-currentCourse;
@@ -1013,7 +1028,7 @@ void setup(){
     if (inFlight){
         //broadcast_data();
         threads.addThread(broadcast_data);
-        delay(2000);
+        delay(10000);
         Serial.println("Starting descent guidance...");
         threads.addThread(descent_guidance);
     } else {
