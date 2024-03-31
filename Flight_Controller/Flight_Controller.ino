@@ -113,8 +113,8 @@ void kacat_init(void){
     servo_begin();
     servo_zero();
     servo_test(1);
-    //gps_begin();
-    //callibrate_altitude();
+    gps_begin();
+    callibrate_sensors();
     guidance_begin();
     //if (!Serial){
         inFlight = true;
@@ -434,15 +434,14 @@ String printBuffer = "";
 String radioTelemetry = "";
 int transmissionSize;
 
-void handle_data_requests(void){
+void continous_data_collection(void){
     while (1){
         collect_system_data();
         collect_gps_data();
         collect_i2c_data();
 
-        Serial.println(millis());
         //threads.delay(dataCollectionDelay);
-        threads.yield();
+        threads.delay(100);
     }
 }
 
@@ -716,6 +715,7 @@ void log_data(void){
     add_to_print_buffer(gyroscopeZ,3);
     add_to_print_buffer(sgpVocIndex);
     sd_write(printBuffer);
+    Serial.println("Logged data: "+printBuffer);
     threads.yield();
 }
 
@@ -728,7 +728,6 @@ String get_checksum(String data){
 }
 
 void broadcast_data(void){
-    threads.addThread(handle_data_requests);
     dataCollectionDelay = 500;
     //flash();
     while (1){
@@ -738,7 +737,6 @@ void broadcast_data(void){
             //Serial.println(gpsData);
         //}
         telemetry_send();
-        log_data();
         //Serial.println("telemetry sent");
         set_sleep_amount();
         //Serial.println("sleeping "+String(sleepAmount));
@@ -945,13 +943,13 @@ void confirmGuidance(void){
 }
 
 void descent_guidance(void){
-    float currentAcceleration = accelerationX;
-    dataCollectionDelay = 100;
-    while (accelerationX<0.5){
-        currentAcceleration = accelerationX;
+    float currentAcceleration = abs(accelerationX) + abs(accelerationY) + abs(accelerationZ);
+    dataCollectionDelay = 200;
+    while (currentAcceleration<15){
+        currentAcceleration = abs(accelerationX) + abs(accelerationY) + abs(accelerationZ);
         threads.yield();
     }
-    dataCollectionDelay = 200;
+    dataCollectionDelay = 100;
     Serial.println("##########");
     Serial.println("Liftoff!!!");
     Serial.println((String)"trigger: "+currentAcceleration);
@@ -961,6 +959,7 @@ void descent_guidance(void){
         threads.yield();
     }
 
+    Serial.println("~~~~~ descent guidance active ~~~~~");
     bool guidanceNeeded = true;
     while (guidanceNeeded){
         //collect_system_data();
@@ -996,8 +995,11 @@ void descent_guidance(void){
     }
 }
 
-void callibrate_altitude(void){
-    //altitudeCalibration = gps.altitude.meters() - bme.readAltitude(SEA_LEVEL_PRESSURE_HPA);
+void callibrate_sensors(void){
+    Adafruit_MPU6050 mpu;
+    mpu.begin(mpuAddress);
+    mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+    mpu.setGyroRange(MPU6050_RANGE_500_DEG);
 }
 
 
@@ -1035,8 +1037,10 @@ void setup(){
     if (inFlight){
         //broadcast_data();
         threads.addThread(broadcast_data);
+        threads.addThread(continous_data_collection);
+        threads.addThread(continous_logging);
         delay(10000);
-        Serial.println("Starting descent guidance...");
+        Serial.println("~~~~~ Starting descent guidance... ~~~~~");
         threads.addThread(descent_guidance);
     } else {
         receive();
