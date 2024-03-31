@@ -62,7 +62,7 @@ const char separator = ',';
 const String checksumIdentifier = "fff";
 
 volatile bool dataRequest = false;
-volatile int dataCollectionDelay = 1000;
+volatile int dataCollectionDelay = 500;
 
 // SENSORS
 int bmeAddress = 0x76;
@@ -443,6 +443,13 @@ void handle_data_requests(void){
         Serial.println(millis());
         //threads.delay(dataCollectionDelay);
         threads.yield();
+    }
+}
+
+void continous_logging(void){
+    while (1){
+        log_data();
+        threads.delay(dataCollectionDelay);
     }
 }
 
