@@ -1,0 +1,12 @@
+radio rxstop
+radio set freq 868000000
+radio set bw 125
+radio set sf sf7
+radio set sync 34
+radio get freq
+radio get bw
+radio get sync
+radio get sf
+radio get cr
+
+63.70,2955.00,0.21,549.00,19427.00,11783.00,12951.00,-525.00,

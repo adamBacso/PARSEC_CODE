@@ -1,0 +1,17 @@
+radio rxstop
+radio set freq 868000000
+radio set bw 125
+radio set sf sf7
+radio set sync 34
+$Telemetry: OK
+radio get freq
+radio get bw
+radio get sync
+radio get sf
+radio get cr
+7ff5f458ff1111f18ff1cf0ffff80
+9ff1f458ff1077f18ff1cf0ffff91
+aff7f458ff1026f18ff1df0ffff6
+cff3f458ff1b7f18ff1ef0ffff96
+dff9f458ffedaf18ff1ef0ffff105
+10ff5f458ffea8f18ff2f0ffff58

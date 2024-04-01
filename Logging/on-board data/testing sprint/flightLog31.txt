@@ -1,0 +1,54 @@
+radio rxstop
+radio set freq 868000000
+radio set bw 125
+radio set sf sf7
+radio set sync 34
+$Telemetry: OK
+radio get freq
+radio get bw
+radio get sync
+radio get sf
+radio get cr
+458ff114bf19ffcf0ffff82
+458ff26f19ffcf0ffff0
+458ffed2f19ffcf0ffff55
+458ff106cf19ffdf0ffff87
+458ff1005f19ffef0ffff6
+458ff1070f19ffdf0ffff5
+458ff109df19ffef0ffff94
+458ffee5f19ffef0ffff55
+458ff10a6f19ff10f0ffff48
+458ff113bf19ff10f0ffff55
+458ff1089f19ff10f0ffff102
+458ff1082f19ff12f0ffff111
+458ff102af19ff13f0ffff55
+458ffed0f19ff13f0ffff84
+458ffee7f19ff13f0ffff82
+458ffeabf19ff2f0ffff51
+458ff11aef19ff14f0ffff102
+458ffeedf19ff14f0ffff6
+458ff10e0f19ff14f0ffff54
+458ff10d1f19ff14f0ffff54
+458ff1008f19ff2f0ffff92
+458ffe36f19ff15f0ffff3
+458ff178f19ff2f0ffff107
+458ffd92f19ff14f0ffff13
+458ffec6f19ff2f0ffff101
+458ff1056f19ff2f0ffff87
+458ffd8df19ff15f0ffff91
+458ff1009f19ff16f0ffff104
+458ffe97f19ff15f0ffff8
+458ffe29f19ff15f0ffff13
+458ff117df19ff18f0ffff61
+458ffebdf19ff1af0ffff84
+458ff1066f19ff1af0ffff54
+458ffec1f19ff1af0ffff0
+458ff1093f19ff1bf0ffff63
+458ffedbf19ff1bf0ffff87
+458ff196f19ff1bf0ffff10
+458ff10e8f19ff1cf0ffff105
+458ff10bef19ff1bf0ffff50
+458ff103cf19ff1bf0ffff101
+458ff10a9f19ff1bf0ffff109
+458ffe6bf19ff1bf0ffff5
+458ff104ef19ff1bf0ffff100

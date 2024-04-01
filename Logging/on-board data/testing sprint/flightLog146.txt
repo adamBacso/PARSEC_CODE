@@ -1,0 +1,105 @@
+radio rxstop
+radio set freq 868000000
+radio set bw 125
+radio set sf sf7
+radio set sync 50
+$Telemetry: OK
+radio get freq
+radio get bw
+radio get sync
+radio get sf
+radio get cr
+aff00f0ff0f0ff0f0ff0f0ff0f0ff0f0ffff55
+0.000,0.000,0.000,0,
+aff5f0ff0f0ff0f0ff0f1e8d8ff06f18ff01f0ffff60
+-0.063,0.030,-0.016,0,
+bff3f0ff0f0ff0f0ff0f1e8ddff04f18ff12f0ffff101
+-0.065,0.027,-0.012,0,
+bff9f0ff0f0ff0f0ff0f1e8dcff18f18ff2f0ffff84
+-0.063,0.027,-0.014,0,
+cff6f0ff0f0ff0f0ff0f1e8deff5f18ff15f0ffff86
+0.000,0.000,0.000,0,
+dff3f0ff0f0ff0f0ff0f1e8e0ff3cf18ff17f0ffff103
+-0.065,0.027,-0.013,0,
+eff1f0ff0f0ff0f0ff0f1e8e1ff03f18ff18f0ffff57
+-0.063,0.028,-0.012,0,
+eff8f0ff0f0ff0f0ff0f1e8ddff5bf18ff17f0ffff63
+-0.061,0.027,-0.010,0,
+10ff5f0ff0f0ff0f0ff0f1e8e0ff26fc1ff3f0ffff62
+0.000,0.000,0.000,0,
+11ff3f0ff0f0ff0f0ff0f1e8e0ff26fc1ff3f0ffff57
+28.334,0.000,0.272,0,
+12ff1f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff92
+28.334,0.000,0.272,0,
+13ff1f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff93
+28.334,0.000,0.272,0,
+14ff2f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff89
+28.334,0.000,0.272,0,
+15ff2f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff88
+28.334,0.000,0.272,0,
+16ff3f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff90
+28.334,0.000,0.272,0,
+17ff5f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff93
+28.334,0.000,0.272,0,
+18ff7f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff80
+28.334,0.000,0.272,0,
+19ff9f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff95
+28.334,0.000,0.272,0,
+1bff2f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff15
+28.334,0.000,0.272,0,
+1cff5f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff9
+28.334,0.000,0.272,0,
+1dff8f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff3
+28.334,0.000,0.272,0,
+20ff1f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff93
+28.334,0.000,0.272,0,
+21ff4f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff89
+28.334,0.000,0.272,0,
+22ff7f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff89
+28.334,0.000,0.272,0,
+24ff00f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff104
+28.334,0.000,0.272,0,
+25ff3f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff90
+28.334,0.000,0.272,0,
+26ff6f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff92
+28.334,0.000,0.272,0,
+27ff9f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff82
+28.334,0.000,0.272,0,
+29ff2f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff87
+28.334,0.000,0.272,0,
+2aff5f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff8
+28.334,0.000,0.272,0,
+2bff7f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff9
+28.334,0.000,0.272,0,
+2cff9f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff6
+28.334,0.000,0.272,0,
+2eff3f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff10
+28.334,0.000,0.272,0,
+30ff5f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff88
+28.334,0.000,0.272,0,
+31ff8f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff84
+28.334,0.000,0.272,0,
+33ff1f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff95
+28.334,0.000,0.272,0,
+34ff4f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff93
+28.334,0.000,0.272,0,
+35ff7f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff95
+28.334,0.000,0.272,0,
+37ff00f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff106
+28.334,0.000,0.272,0,
+38ff3f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff86
+28.334,0.000,0.272,0,
+39ff6f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff82
+28.334,0.000,0.272,0,
+3aff9f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff5
+28.334,0.000,0.272,0,
+3cff2f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff12
+28.334,0.000,0.272,0,
+3dff5f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff12
+28.334,0.000,0.272,0,
+3eff8f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff0
+28.334,0.000,0.272,0,
+41ff1f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff90
+28.334,0.000,0.272,0,
+42ff4f0ff0f0ff0f0ff0f1a20d86bdff1a20dcd3efc1ff3f0ffff92
+28.334,0.000,0.272,0,

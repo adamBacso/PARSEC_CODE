@@ -1,0 +1,2 @@
+radio rxstop
+radio set freq 868000000

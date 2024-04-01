@@ -62,7 +62,10 @@ const char separator = ',';
 const String checksumIdentifier = "fff";
 
 volatile bool dataRequest = false;
-volatile int dataCollectionDelay = 500;
+volatile int dataCollectionDelay = 100;
+volatile int dataLoggingBaseDelay = 2000;
+volatile int dataLoggingFastDelay = 100;
+volatile int currentLoggingDelay = dataLoggingBaseDelay;
 
 // SENSORS
 int bmeAddress = 0x76;
@@ -112,17 +115,16 @@ void kacat_init(void){
     get_radio_info();
     servo_begin();
     servo_zero();
-    servo_test(1);
-    gps_begin();
+    servo_test(2);
+    //gps_begin();
     callibrate_sensors();
     guidance_begin();
-    //if (!Serial){
-        inFlight = true;
-    Serial.println("Starting flight");
-    //} else {
-    //    receive();
-    //    inFlight = false;
-    //}
+    if (!Serial){
+        inFlight = false;
+    Serial.println("~~~ Starting operation ~~~");
+    } else {
+        inFlight = false;
+    }
 }
 
 void config(void) {
@@ -131,7 +133,6 @@ void config(void) {
         Serial.println(config.readStringUntil('\n',200)); // 1
         config.readStringUntil('\n'); // 2
         String frequencyString = config.readStringUntil('\n');
-        Serial.println(frequencyString);
         radioFrequency = (int)frequencyString.toInt(); // 3
         config.readStringUntil('\n'); // 4
         syncWord = (int)config.readStringUntil('\n').toInt(); // 5
@@ -149,9 +150,13 @@ void config(void) {
         targetLongitude = config.readStringUntil('\n').toFloat(); // 17
         config.readStringUntil('\n'); // 18
         String percentActiveString = config.readStringUntil('\n');
-        Serial.println(percentActiveString);
         percentActive = (int)percentActiveString.toInt(); // 19
-        Serial.println(percentActive);
+        config.readStringUntil('\n'); // 20
+        dataCollectionDelay = (int)config.readStringUntil('\n').toInt(); // 21
+        config.readStringUntil('\n'); // 22
+        dataLoggingBaseDelay = (int)config.readStringUntil('\n').toInt(); // 23
+        config.readStringUntil('\n'); // 24
+        dataLoggingFastDelay = (int)config.readStringUntil('\n').toInt(); // 25
         config.close();
     }
     else{
@@ -191,9 +196,11 @@ void send(String data){
 }
 
 void receive(void){
+    Serial.println("Receiving...");
     COMMS_SERIAL.clear();
     COMMS_SERIAL.println("radio rx 0");
-    while (!COMMS_SERIAL.available());
+    delay(500);
+    //while (!COMMS_SERIAL.available());
     Serial.println(String("reception status")+COMMS_SERIAL.readString());
     delay(50);
     COMMS_SERIAL.clear();
@@ -441,14 +448,14 @@ void continous_data_collection(void){
         collect_i2c_data();
 
         //threads.delay(dataCollectionDelay);
-        threads.delay(100);
+        threads.delay(dataCollectionDelay);
     }
 }
 
 void continous_logging(void){
     while (1){
         log_data();
-        threads.delay(dataCollectionDelay);
+        threads.delay(currentLoggingDelay);
     }
 }
 
@@ -461,7 +468,7 @@ void telemetry_begin(void){
     send("$Telemetry: OK");
 }
 String get_pentadecimal(int number){
-    return String(number, 15);
+    return String(number, 14);
 }
 String get_pentadecimal(float number, int precision = 0){
     //Serial.println("Getting pentadecimal");
@@ -479,7 +486,7 @@ String get_pentadecimal(float number, int precision = 0){
     output += get_pentadecimal(wholePart);
     //Serial.println(4);
     if (precision > 0){
-        output += "ff";
+        output += "e";
         for (int i = 0; i < get_leading_zeros(decimalNumber); i++){
             output += "0";
         }
@@ -675,17 +682,25 @@ void telemetry_send(void){
     radioTelemetry = "";
 
     // HEADER
-    
+
+    if (latitude > 47){
+    latitude -= 47;
+    latitude *= 1000000;   
+    }
+    if (longitude > 19){
+    longitude -= 19;
+    longitude *= 1000000;
+    }
     prints(get_time(),1);                                             // current mission time
-    prints(latitude,6);                                 // latitude
-    prints(longitude,6);                                 // longitude
+    prints(latitude);                                 // latitude
+    prints(longitude);                                 // longitude
     prints(gpsAltitude,2);                              // gps altitude
     prints(pressure,4);                                    //     pressure in hPa
     prints(temperature,2);
     prints(sgpVocIndex);
 
     String checksum = get_checksum(radioTelemetry);                            // checksum
-    radioTelemetry += checksumIdentifier+checksum;
+    radioTelemetry += checksum;
     transmissionSize += radioTelemetry.length();
     transmissionSize *= 8;
     Serial.println("Sending telemetry: "+radioTelemetry);
@@ -715,7 +730,7 @@ void log_data(void){
     add_to_print_buffer(gyroscopeZ,3);
     add_to_print_buffer(sgpVocIndex);
     sd_write(printBuffer);
-    Serial.println("Logged data: "+printBuffer);
+    //Serial.println("Logged data: "+printBuffer);
     threads.yield();
 }
 
@@ -728,7 +743,6 @@ String get_checksum(String data){
 }
 
 void broadcast_data(void){
-    dataCollectionDelay = 500;
     //flash();
     while (1){
         //Serial.println("broadcasting");
@@ -752,29 +766,113 @@ void broadcast_data(void){
 // ~INCOMING DATA HANDLING
 
 void handle_incoming_data(void){
-    flash();
     receive();
     while (true){
         delegate_incoming_telemetry();
-        threads.delay(5);
+        delay(5);
     }
 }
 void delegate_incoming_telemetry(void){
     String incoming;
-    Serial.println(COMMS_SERIAL.readString());
     
     if (COMMS_SERIAL.available()>0){
         incoming = COMMS_SERIAL.readString();
-        
+        Serial.println(incoming);
         if (incoming.startsWith(telemetryPreamble)){
+            int dataID = 0;
             incoming = incoming.substring(telemetryPreamble.length());
-            incoming = hex_to_string(incoming);
+            int commaIndex = incoming.indexOf("f");
+            while (commaIndex != -1){
+                String dataFragment = incoming.substring(0,commaIndex);
+                int decimalIndex = dataFragment.indexOf("e");
+                float number = 0;
+                if (decimalIndex != -1){
+                    float wholePart = base14_to_base10(dataFragment.substring(0,decimalIndex));
+                    float decimalPart = base14_to_base10(dataFragment.substring(decimalIndex+1));
+                    number = wholePart + decimalPart / pow(10, dataFragment.length()-decimalIndex-1);
+                } else {
+                    number = base14_to_base10(dataFragment);
+                }
+                switch (dataID)
+                {
+                case 0: // time
+                    Serial.print("Transmission time: ");
+                    Serial.print(number);
+                    Serial.println(" s");
+                    break;
+                case 1: // latitude
+                    number /= 1000000;
+                    number += 47;
+                    Serial.print("Latitude: ");
+                    Serial.print(number,6);
+                    Serial.println(" deg");
+                    break;
+                case 2: // longitude
+                    number /= 1000000;
+                    number += 19;
+                    Serial.print("Longitude: ");
+                    Serial.print(number,6);
+                    Serial.println(" deg");
+                    break;
+                case 3: // altitude
+                    Serial.print("Altitude: ");
+                    Serial.print(number,2);
+                    Serial.println(" m");
+                    break;
+                case 4: // pressure
+                    Serial.print("Pressure: ");
+                    Serial.print(number);
+                    Serial.println(" hPa");
+                    break;
+                case 5: // temperature
+                    Serial.print("Temperature: ");
+                    Serial.print(number,2);
+                    Serial.println(" C");
+                    break;
+                case 6: // voc reading
+                    number = (int)number;
+                    Serial.print("VOC: ");
+                    Serial.print(number);
+                    Serial.println(" ppb");
+                    break;
+                default:
+                    Serial.print("~ UNEXPECTED DATA ~");
+                    Serial.print(dataID);
+                    Serial.print(": ");
+                    Serial.println(number);
+                    break;
+                }
+                Serial.println("~~~~~~~~~");
+                flightLog = SD.open(logName.c_str(), FILE_WRITE);
+                if (flightLog){
+                    flightLog.print(number);
+                    flightLog.print(",");
+                }
+                flightLog.close();
 
-            display_incoming_data(incoming);
+                incoming = incoming.substring(commaIndex+1);
+                dataID += 1;
+                commaIndex = incoming.indexOf("f");
+            }
+            flightLog = SD.open(logName.c_str(), FILE_WRITE);
+            if (flightLog){
+                flightLog.println();
+            }
+            flightLog.close();
         }
-    } else if (Serial.available()) {
-        
+    } 
+}
+
+float base14_to_base10(const String& number) {
+    int base = 14;
+    float result = 0;
+    for (size_t i = 0; i < number.length(); ++i) {
+        char digit = number.charAt(i);
+        // Convert the character digit to its corresponding integer value
+        int value = (isdigit(digit)) ? (digit - '0') : (digit - 'a' + 10);
+        result = result * base + value;
     }
+    return result;
 }
 
 void display_incoming_data(String data){ // TODO: do something already about this!!!!
@@ -943,17 +1041,18 @@ void confirmGuidance(void){
 }
 
 void descent_guidance(void){
+    currentLoggingDelay = dataLoggingBaseDelay;
     float currentAcceleration = abs(accelerationX) + abs(accelerationY) + abs(accelerationZ);
-    dataCollectionDelay = 200;
     while (currentAcceleration<15){
         currentAcceleration = abs(accelerationX) + abs(accelerationY) + abs(accelerationZ);
         threads.yield();
     }
-    dataCollectionDelay = 100;
+    currentLoggingDelay = dataLoggingFastDelay;
     Serial.println("##########");
     Serial.println("Liftoff!!!");
     Serial.println((String)"trigger: "+currentAcceleration);
     Serial.println("##########");
+    sd_write("~~~ LIFTOFF ~~~");
     while (gps.altitude.meters()<guidanceAltitudeThreshold){    // are we flying? FIXME: chamber may be airtight -> constant pressure
                                                                                                 // TODO: look into using accelerometer
         threads.yield();
@@ -1043,7 +1142,6 @@ void setup(){
         Serial.println("~~~~~ Starting descent guidance... ~~~~~");
         threads.addThread(descent_guidance);
     } else {
-        receive();
         handle_incoming_data();
     }
 }

@@ -1,0 +1,13 @@
+radio rxstop
+radio set freq 0
+radio set bw 0
+radio set sf sf0
+radio set sync 0
+$Telemetry: OK
+radio get freq
+radio get bw
+radio get sync
+radio get sf
+radio get cr
+7ff5f458ff41cf14ff1af0ffff56
+8ff9f458ff2ab0f14ff31f0ffff14

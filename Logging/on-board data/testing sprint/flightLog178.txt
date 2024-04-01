@@ -1,0 +1,3 @@
+radio rxstop
+radio set freq 868000000
+radio set bw 125

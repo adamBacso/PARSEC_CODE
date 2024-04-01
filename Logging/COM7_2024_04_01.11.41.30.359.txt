@@ -1,0 +1,472 @@
+KACAT Mission Control
+Waiting for RADIO handshakeInitializing SD card...SD: OK
+	File Name: flightLog212.txt
+	File Created: flightLog212.txt
+*Parsec* KACAT config v31.03.2024 21:15 ~BÁ #1.Change header on each change; 2.Only change the lines under a 'v'; 3. DO NOT CHANGE THE FILE NAME!!!
+868000000
+10
+10
+
+AUTOMATIC_RADIO_SETUP
+radio rxstop
+ok
+
+radio set freq 868000000
+ok
+
+radio set bw 125
+ok
+
+radio set sf sf7
+ok
+
+radio set sync 34
+ok
+
+Telemetry: OK
+Frequency: radio get freq
+868000000
+
+Bandwidth: radio get bw
+125
+
+Sync word: radio get sync
+34
+
+Spreading factor: radio get sf
+sf7
+
+Chirp rate: radio get cr
+4/5
+
+Radio info:
+Servo:
+	Clockwise speed: 66
+	Counterclockwise speed: 120
+Servo: OK
+Servo test
+Guidance info:
+	Target latitude: 47.52
+	Target longitude: 19.11
+ngitude: 
+
+Guidance: OK
+Starting flight
+Sending telemetry: ce6f0f0f0e0f0e0f0e0f0f3
+Sending telemetry: ce9f0f0f0e0f282a0e31f1ae33f0f55
+Sending telemetry: de4f0f0f0e0f282a0e31f1ae33f0f61
+Sending telemetry: de8f0f0f0e0f282a0e31f1ae33f0f49
+Sending telemetry: 10e2f0f0f0e0f282a0e3cf1ae4bf0f90
+Sending telemetry: 10e7f0f0f0e0f282a0e3cf1ae4bf0f95
+Sending telemetry: 11e1f0f0f0e0f282a0e3cf1ae4bf0f88
+Sending telemetry: 11e6f0f0f0e0f282a0e3cf1ae4bf8727f101
+Sending telemetry: 12e1f0f0f0e0f282a7e4df1ae50f8727f53
+Sending telemetry: 12e6f0f0f0e0f282a7e4df1ae50f8727f50
+Sending telemetry: 13e1f0f0f0e0f282a7e4df1ae50f8bd0f48
+Sending telemetry: 13e6f0f0f0e0f282a6e63f1ae51f8bd0f98
+Sending telemetry: 14e00f0f0f0e0f282a6e63f1ae51f8bd0f83
+Sending telemetry: 14e5f0f0f0e0f282a7e2cf1ae52f9071f49
+Sending telemetry: 15e00f0f0f0e0f282a7e2cf1ae52f9071f5
+Sending telemetry: 15e5f0f0f0e0f282a7e2cf1ae52f9071f48
+Sending telemetry: 16e00f0f0f0e0f282a3e08f1ae53f9217f88
+Sending telemetry: 16e5f0f0f0e0f282a3e08f1ae53f9217f109
+Sending telemetry: 17e00f0f0f0e0f282a3e08f1ae53f9357f92
+Sending telemetry: 17e5f0f0f0e0f282a6e1f1ae56f9357f80
+Sending telemetry: 18e00f0f0f0e0f282a6e1f1ae56f9357f106
+Sending telemetry: 18e5f0f0f0e0f282a6e1f1ae56f93b6f9
+~~~~~ Starting descent guidance... ~~~~~
+Sending telemetry: 19e000f0f0f0e0f282a4e6cf1ae57f93b6f106
+Sending telemetry: 19e5f0f0f0e0f282a4e6cf1ae57f93b6f111
+Sending telemetry: 1ae00f0f0f0e0f282a4e6cf1ae57f9555f80
+Sending telemetry: 1ae5f0f0f0e0f282a6e07f1ae59f9555f59
+Sending telemetry: 1be000f0f0f0e0f282a6e07f1ae59f9555f61
+Sending telemetry: 1be5f0f0f0e0f282a6e07f1ae59f95a4f109
+Sending telemetry: 1ce00f0f0f0e0f282a6e55f1ae7f95a4f101
+Sending telemetry: 1ce5f0f0f0e0f282a6e55f1ae7f95a4f80
+Sending telemetry: 1de00f0f0f0e0f282a6e03f1ae7f960df99
+Sending telemetry: 1de5f0f0f0e0f282a6e03f1ae7f960df86
+Sending telemetry: 1de9f0f0f0e0f282a6e03f1ae7f960df90
+Sending telemetry: 20e4f0f0f0e0f282a6e69f1ae7f9777f89
+Sending telemetry: 20e9f0f0f0e0f282a6e69f1ae7f9777f84
+Sending telemetry: 21e4f0f0f0e0f282a6e69f1ae7f9777f88
+Sending telemetry: 21e9f0f0f0e0f282a9e1df1ae5af9798f98
+Sending telemetry: 22e4f0f0f0e0f282a9e1df1ae5af9798f108
+Sending telemetry: 22e9f0f0f0e0f282a9e1df1ae5af9798f97
+Sending telemetry: 23e4f0f0f0e0f282a7e63f1ae5af9811f61
+Sending telemetry: 23e9f0f0f0e0f282a7e63f1ae5af9811f48
+Sending telemetry: 24e3f0f0f0e0f282a7e63f1ae5af9866f61
+Sending telemetry: 24e8f0f0f0e0f282abe55f1ae59f9866f62
+Sending telemetry: 25e3f0f0f0e0f282abe55f1ae59f9866f52
+Sending telemetry: 25e8f0f0f0e0f282abe55f1ae59f98c8f100
+Sending telemetry: 26e3f0f0f0e0f282ace19f1ae5bf98c8f62
+Sending telemetry: 26e8f0f0f0e0f282ace19f1ae5bf98c8f53
+Sending telemetry: 27e3f0f0f0e0f282ace19f1ae5bf9948f105
+Sending telemetry: 27e8f0f0f0e0f282a8e4df1ae5cf9948f96
+Sending telemetry: 28e2f0f0f0e0f282a8e4df1ae5cf9948f101
+Sending telemetry: 28e7f0f0f0e0f282a8e4df1ae5cf99a0f61
+Sending telemetry: 29e2f0f0f0e0f282a9e29f1ae5cf99a0f99
+Sending telemetry: 29e7f0f0f0e0f282a9e29f1ae5cf99a0f102
+Sending telemetry: 2ae2f0f0f0e0f282a9e29f1ae5cf9a24f52
+Sending telemetry: 2ae7f0f0f0e0f282a7e27f1ae60f9a24f97
+Sending telemetry: 2be2f0f0f0e0f282a7e27f1ae60f9a24f103
+Sending telemetry: 2be7f0f0f0e0f282a7e27f1ae60f9a72f97
+Sending telemetry: 2ce1f0f0f0e0f282a8e3cf1ae60f9a72f60
+Sending telemetry: 2ce6f0f0f0e0f282a8e3cf1ae60f9a72f59
+Sending telemetry: 2de1f0f0f0e0f282a8e3cf1ae60f9ab9f101
+Sending telemetry: 2de6f0f0f0e0f282a5eaf1ae60f9ab9f94
+Sending telemetry: 30e1f0f0f0e0f282a5eaf1ae60f9ab9f12
+Sending telemetry: 30e6f0f0f0e0f282a5eaf1ae60f9b21f80
+Sending telemetry: 31e00f0f0f0e0f282a6e6df1ae61f9b21f86
+Sending telemetry: 31e6f0f0f0e0f282a6e6df1ae61f9b21f96
+Sending telemetry: 32e00f0f0f0e0f282a6e6df1ae61f9b6cf3
+Sending telemetry: 32e5f0f0f0e0f282a5e33f1ae62f9b6cf100
+Sending telemetry: 33e00f0f0f0e0f282a5e33f1ae62f9b6cf80
+Sending telemetry: 33e5f0f0f0e0f282a5e33f1ae62f9bb3f97
+Sending telemetry: 34e00f0f0f0e0f282a3e69f1ae62f9bb3f90
+Sending telemetry: 34e5f0f0f0e0f282a3e69f1ae62f9bb3f111
+Sending telemetry: 35e00f0f0f0e0f282a3e69f1ae62f9c15f15
+Sending telemetry: 35e5f0f0f0e0f282a5e20f1ae63f9c15f48
+Sending telemetry: 35e9f0f0f0e0f282a5e20f1ae63f9c15f60
+Sending telemetry: 36e4f0f0f0e0f282a5e20f1ae63f9c41f51
+Sending telemetry: 36e9f0f0f0e0f282a4e48f1ae62f9c41f48
+Sending telemetry: 37e4f0f0f0e0f282a4e48f1ae62f9c41f60
+Sending telemetry: 37e9f0f0f0e0f282a4e48f1ae62f9c84f56
+Sending telemetry: 38e4f0f0f0e0f282a4e71f1ae62f9c84f48
+Sending telemetry: 38e9f0f0f0e0f282a4e71f1ae62f9c84f61
+Sending telemetry: 39e3f0f0f0e0f282a4e71f1ae62f9cc2f107
+Sending telemetry: 39e8f0f0f0e0f282a6e2bf1ae62f9cc2f52
+Sending telemetry: 3ae3f0f0f0e0f282a6e2bf1ae62f9cc2f103
+Sending telemetry: 3ae8f0f0f0e0f282a6e2bf1ae62f9d15f62
+Sending telemetry: 3be3f0f0f0e0f282a9e02f1ae61f9d15f104
+Sending telemetry: 3be8f0f0f0e0f282a9e02f1ae61f9d15f99
+Sending telemetry: 3ce3f0f0f0e0f282a9e02f1ae61f9d47f110
+Sending telemetry: 3ce8f0f0f0e0f282a6e40f1ae5cf9d47f61
+Sending telemetry: 3de3f0f0f0e0f282a6e40f1ae5cf9d47f49
+Sending telemetry: 3de8f0f0f0e0f282a6e40f1ae5cf9d77f57
+Sending telemetry: 40e3f0f0f0e0f282a8e31f1ae60f9d77f57
+Sending telemetry: 40e8f0f0f0e0f282a8e31f1ae60f9d77f50
+Sending telemetry: 41e3f0f0f0e0f282a8e31f1ae60f9da5f108
+Sending telemetry: 41e8f0f0f0e0f282a2e3bf1ae61f9da5f63
+Sending telemetry: 42e2f0f0f0e0f282a2e3bf1ae61f9da5f54
+Sending telemetry: 42e7f0f0f0e0f282a5e33f1ae62f9dd5f99
+Sending telemetry: 43e2f0f0f0e0f282a5e33f1ae62f9dd5f103
+Sending telemetry: 43e7f0f0f0e0f282a5e33f1ae62f9dd5f98
+Sending telemetry: 44e2f0f0f0e0f282a3e45f1ae62fa018f51
+Sending telemetry: 44e7f0f0f0e0f282a3e45f1ae62fa018f54
+Sending telemetry: 45e2f0f0f0e0f282a3e45f1ae62fa018f50
+Sending telemetry: 45e7f0f0f0e0f2829be5cf1ae62fa045f97
+Sending telemetry: 46e1f0f0f0e0f2829be5cf1ae62fa045f100
+Sending telemetry: 46e6f0f0f0e0f2829be5cf1ae62fa045f99
+Sending telemetry: 47e1f0f0f0e0f2829be46f1ae62fa076f49
+Sending telemetry: 47e6f0f0f0e0f2829be46f1ae62fa076f54
+Sending telemetry: 48e1f0f0f0e0f2829be46f1ae62fa076f62
+Sending telemetry: 48e6f0f0f0e0f282a0e18f1ae63fa09df101
+Sending telemetry: 49e1f0f0f0e0f282a0e18f1ae63fa09df99
+Sending telemetry: 49e6f0f0f0e0f282a0e18f1ae63fa09df100
+Sending telemetry: 4ae1f0f0f0e0f2829de66f1ae63fa0b9f56
+Sending telemetry: 4ae6f0f0f0e0f2829de66f1ae63fa0b9f63
+Sending telemetry: 4be1f0f0f0e0f2829de66f1ae63fa10bf51
+Sending telemetry: 4be5f0f0f0e0f2829be36f1ae63fa10bf52
+Sending telemetry: 4ce00f0f0f0e0f2829be36f1ae63fa10bf0
+Sending telemetry: 4ce5f0f0f0e0f2829be36f1ae63fa12bf55
+Sending telemetry: 4de00f0f0f0e0f2829de0f1ae63fa12bf54
+Sending telemetry: 4de5f0f0f0e0f2829de0f1ae63fa12bf3
+Sending telemetry: 4de9f0f0f0e0f2829de0f1ae63fa12bf15
+Sending telemetry: 50e4f0f0f0e0f282a2e4cf1ae63fa14cf57
+Sending telemetry: 50e9f0f0f0e0f282a2e4cf1ae63fa14cf52
+Sending telemetry: 51e4f0f0f0e0f282a2e4cf1ae63fa14cf56
+Sending telemetry: 51e9f0f0f0e0f282a2e57f1ae63fa178f56
+Sending telemetry: 52e4f0f0f0e0f282a2e57f1ae63fa178f54
+Sending telemetry: 52e9f0f0f0e0f282a2e57f1ae63fa178f59
+Sending telemetry: 53e4f0f0f0e0f282a6e6f1ae63fa19af80
+Sending telemetry: 53e8f0f0f0e0f282a6e6f1ae63fa19af92
+Sending telemetry: 54e3f0f0f0e0f282a6e6f1ae63fa19af80
+Sending telemetry: 54e8f0f0f0e0f282a8e4bf1ae62fa1adf105
+Sending telemetry: 55e3f0f0f0e0f282a8e4bf1ae62fa1adf99
+Sending telemetry: 55e8f0f0f0e0f282a8e4bf1ae62fa1adf104
+Sending telemetry: 56e3f0f0f0e0f282a9e41f1ae63fa1c1f100
+Sending telemetry: 56e8f0f0f0e0f282a9e41f1ae63fa1c1f111
+Sending telemetry: 57e3f0f0f0e0f282a9e41f1ae63fa20df96
+Sending telemetry: 57e8f0f0f0e0f282a6e39f1ae64fa20df108
+Sending telemetry: 58e3f0f0f0e0f282a6e39f1ae64fa20df104
+Sending telemetry: 58e8f0f0f0e0f282a6e39f1ae64fa221f52
+Sending telemetry: 59e3f0f0f0e0f282a4e43f1ae8fa221f11
+Sending telemetry: 59e8f0f0f0e0f282a4e43f1ae8fa221f0
+Sending telemetry: 5ae2f0f0f0e0f282a4e43f1ae8fa242f87
+Sending telemetry: 5ae7f0f0f0e0f282a0e10f1ae66fa242f104
+Sending telemetry: 5be2f0f0f0e0f282a0e10f1ae66fa242f110
+Sending telemetry: 5be7f0f0f0e0f282a0e10f1ae66fa265f110
+Sending telemetry: 5ce2f0f0f0e0f2829de6df1ae66fa265f53
+Sending telemetry: 5ce7f0f0f0e0f2829de6df1ae66fa265f48
+Sending telemetry: 5de2f0f0f0e0f2829de6df1ae66fa297f63
+Sending telemetry: 5de7f0f0f0e0f2829ce5df1ae68fa297f48
+Sending telemetry: 60e2f0f0f0e0f2829ce5df1ae68fa297f98
+Sending telemetry: 60e6f0f0f0e0f2829ce20f1ae68fa29bf96
+Sending telemetry: 61e1f0f0f0e0f2829ce20f1ae68fa29bf102
+Sending telemetry: 61e7f0f0f0e0f2829ce20f1ae68fa29bf96
+Sending telemetry: 62e2f0f0f0e0f2829be18f1ae68fa2b0f101
+Sending telemetry: 62e7f0f0f0e0f2829be18f1ae68fa2b0f96
+Sending telemetry: 63e1f0f0f0e0f2829be18f1ae68fa2b0f103
+Sending telemetry: 63e6f0f0f0e0f2829be69f1ae69fa2cbf52
+Sending telemetry: 64e1f0f0f0e0f2829be69f1ae69fa2cbf52
+Sending telemetry: 64e6f0f0f0e0f2829be69f1ae69fa2cbf51
+Sending telemetry: 65e1f0f0f0e0f2829ce8f1ae6afa309f82
+Sending telemetry: 65e6f0f0f0e0f2829ce8f1ae6afa309f85
+Sending telemetry: 66e1f0f0f0e0f2829ce8f1ae6afa318f81
+Sending telemetry: 66e5f0f0f0e0f28299e48f1ae69fa318f99
+Sending telemetry: 67e00f0f0f0e0f28299e48f1ae69fa318f87
+Sending telemetry: 67e5f0f0f0e0f28299e48f1ae69fa324f109
+Sending telemetry: 68e00f0f0f0e0f2829ce70f1ae69fa324f6
+Sending telemetry: 68e5f0f0f0e0f2829ce70f1ae69fa324f51
+11:43:20:074 -> Sending telemetry: 69e00f0f0f0e0f2829ce70f1ae69fa319f9
+11:43:20:545 -> Sending telemetry: 69e5f0f0f0e0f2829ae66f1ae6afa319f97
+11:43:21:029 -> Sending telemetry: 69e9f0f0f0e0f2829ae66f1ae6afa319f109
+11:43:21:529 -> Sending telemetry: 6ae4f0f0f0e0f2829ae66f1ae6afa332f49
+11:43:21:990 -> Sending telemetry: 6ae9f0f0f0e0f2829ce5bf1ae69fa332f49
+11:43:22:474 -> Sending telemetry: 6be4f0f0f0e0f2829ce5bf1ae69fa332f63
+11:43:22:961 -> Sending telemetry: 6be9f0f0f0e0f2829ce5bf1ae69fa353f53
+11:43:23:434 -> Sending telemetry: 6ce3f0f0f0e0f2829be29f1ae6bfa353f56
+11:43:23:931 -> Sending telemetry: 6ce8f0f0f0e0f2829be29f1ae6bfa353f51
+11:43:24:414 -> Sending telemetry: 6de3f0f0f0e0f2829be29f1ae6bfa361f62
+11:43:24:903 -> Sending telemetry: 6de8f0f0f0e0f2829be03f1ae6bfa361f61
+11:43:25:390 -> Sending telemetry: 70e3f0f0f0e0f2829be03f1ae6bfa361f99
+11:43:26:177 -> Sending telemetry: 70e8f0f0f0e0f2829be03f1ae6bfa37df60
+11:43:26:435 -> Sending telemetry: 71e3f0f0f0e0f2829ce23f1ae6bfa37df53
+11:43:26:861 -> Sending telemetry: 71e8f0f0f0e0f2829ce23f1ae6bfa37df62
+11:43:27:349 -> Sending telemetry: 72e3f0f0f0e0f2829ce23f1ae6bfa395f105
+11:43:27:842 -> Sending telemetry: 72e7f0f0f0e0f282a1e1cf1ae6bfa395f52
+11:43:28:349 -> Sending telemetry: 73e3f0f0f0e0f282a1e1cf1ae6bfa395f49
+11:43:28:830 -> Sending telemetry: 73e7f0f0f0e0f2829ce55f1ae69fa3b2f106
+11:43:29:323 -> Sending telemetry: 74e2f0f0f0e0f2829ce55f1ae69fa3b2f104
+11:43:29:843 -> Sending telemetry: 74e7f0f0f0e0f2829ce55f1ae69fa3b2f109
+11:43:30:321 -> Sending telemetry: 75e2f0f0f0e0f282a0e67f1ae69fa3bbf51
+11:43:30:806 -> Sending telemetry: 75e7f0f0f0e0f282a0e67f1ae69fa3bbf54
+11:43:31:312 -> Sending telemetry: 76e2f0f0f0e0f282a0e67f1ae69fa3bbf48
+11:43:31:794 -> Sending telemetry: 76e7f0f0f0e0f2829be3af1ae6afa3d5f101
+11:43:32:284 -> Sending telemetry: 77e2f0f0f0e0f2829be3af1ae6afa3d5f97
+11:43:32:779 -> Sending telemetry: 77e7f0f0f0e0f2829be3af1ae6afa3d5f100
+11:43:33:285 -> Sending telemetry: 78e2f0f0f0e0f282a3e03f1ae6cfa407f101
+11:43:33:803 -> Sending telemetry: 78e7f0f0f0e0f282a3e03f1ae6cfa407f96
+11:43:34:291 -> Sending telemetry: 79e2f0f0f0e0f282a3e03f1ae6cfa419f107
+11:43:34:786 -> Sending telemetry: 79e7f0f0f0e0f282a0e70f1ae6cfa419f105
+11:43:35:298 -> Sending telemetry: 7ae2f0f0f0e0f282a0e70f1ae6cfa419f52
+11:43:35:782 -> Sending telemetry: 7ae7f0f0f0e0f282a0e70f1ae6cfa428f51
+11:43:36:255 -> Sending telemetry: 7be2f0f0f0e0f282a4e44f1ae6cfa428f54
+11:43:36:729 -> Sending telemetry: 7be6f0f0f0e0f282a4e44f1ae6cfa428f50
+11:43:37:217 -> Sending telemetry: 7ce1f0f0f0e0f282a4e44f1ae6cfa433f62
+11:43:37:690 -> Sending telemetry: 7ce6f0f0f0e0f282a5e51f1ae6cfa433f60
+11:43:38:191 -> Sending telemetry: 7de1f0f0f0e0f282a5e51f1ae6cfa433f60
+11:43:38:675 -> Sending telemetry: 7de6f0f0f0e0f282a5e51f1ae6cfa44bf109
+11:43:39:161 -> Sending telemetry: 80e1f0f0f0e0f282a2e69f1ae6dfa44bf58
+11:43:39:661 -> Sending telemetry: 80e6f0f0f0e0f282a2e69f1ae6dfa44bf61
+11:43:40:145 -> Sending telemetry: 81e1f0f0f0e0f282a2e69f1ae6dfa456f110
+11:43:40:629 -> Sending telemetry: 81e5f0f0f0e0f282abe33f1ae6cfa456f50
+11:43:41:127 -> Sending telemetry: 82e00f0f0f0e0f282abe33f1ae6cfa456f4
+11:43:41:612 -> Sending telemetry: 82e5f0f0f0e0f282abe33f1ae6cfa455f50
+11:43:42:075 -> Sending telemetry: 83e00f0f0f0e0f282a8e41f1ae6bfa455f88
+11:43:42:595 -> Sending telemetry: 83e5f0f0f0e0f282a8e41f1ae6bfa455f109
+11:43:43:102 -> Sending telemetry: 84e00f0f0f0e0f282a8e41f1ae6bfa462f91
+11:43:43:586 -> Sending telemetry: 84e5f0f0f0e0f282aae07f1ae6bfa462f53
+11:43:44:060 -> Sending telemetry: 85e00f0f0f0e0f282aae07f1ae6bfa462f1
+11:43:44:556 -> Sending telemetry: 85e5f0f0f0e0f282aae07f1ae6bfa476f49
+11:43:45:010 -> Sending telemetry: 85e9f0f0f0e0f282a7e66f1ae6bfa476f108
+11:43:45:527 -> Sending telemetry: 86e4f0f0f0e0f282a7e66f1ae6bfa476f98
+11:43:46:017 -> Sending telemetry: 86e9f0f0f0e0f282a7e66f1ae6bfa484f98
+11:43:46:479 -> Sending telemetry: 87e4f0f0f0e0f282a5e70f1ae6cfa484f106
+11:43:46:997 -> Sending telemetry: 87e9f0f0f0e0f282a5e70f1ae6cfa484f103
+11:43:47:498 -> Sending telemetry: 88e4f0f0f0e0f282a5e70f1ae6cfa4a3f59
+11:43:47:960 -> Sending telemetry: 88e9f0f0f0e0f282a7e54f1ae6dfa4a3f53
+11:43:48:444 -> Sending telemetry: 89e4f0f0f0e0f282a7e54f1ae6dfa4a3f57
+11:43:48:920 -> Sending telemetry: 89e8f0f0f0e0f282a7e54f1ae6dfa4aaf103
+11:43:49:426 -> Sending telemetry: 8ae3f0f0f0e0f282a5e70f1ae6cfa4aaf55
+11:43:49:922 -> Sending telemetry: 8ae8f0f0f0e0f282a5e70f1ae6cfa4aaf60
+11:43:50:404 -> Sending telemetry: 8be3f0f0f0e0f282a5e70f1ae6cfa4b7f97
+11:43:50:866 -> Sending telemetry: 8be8f0f0f0e0f282a6e1af1ae6bfa4b7f63
+11:43:51:351 -> Sending telemetry: 8ce3f0f0f0e0f282a6e1af1ae6bfa4b7f53
+11:43:51:823 -> Sending telemetry: 8ce7f0f0f0e0f282a6e1af1ae6bfa4bbf100
+11:43:52:329 -> Sending telemetry: 8de2f0f0f0e0f282a3e4df1ae6bfa4bbf99
+11:43:52:825 -> Sending telemetry: 8de7f0f0f0e0f282a3e4df1ae6bfa4bbf102
+11:43:53:318 -> Sending telemetry: 90e2f0f0f0e0f282a3e4df1ae6bfa4c9f108
+11:43:53:824 -> Sending telemetry: 90e7f0f0f0e0f2829ce58f1ae6bfa4c9f60
+11:43:54:319 -> Sending telemetry: 91e2f0f0f0e0f2829ce58f1ae6bfa4c9f56
+11:43:54:809 -> Sending telemetry: 91e7f0f0f0e0f2829ce58f1ae6bfa4caf101
+11:43:55:315 -> Sending telemetry: 92e2f0f0f0e0f282a4e10f1ae6cfa4caf97
+11:43:55:800 -> Sending telemetry: 92e7f0f0f0e0f282a4e10f1ae6cfa4caf100
+11:43:56:296 -> Sending telemetry: 93e2f0f0f0e0f282a4e10f1ae6cfa501f98
+11:43:56:777 -> Sending telemetry: 93e7f0f0f0e0f282a5e4cf1ae70fa501f98
+11:43:57:261 -> Sending telemetry: 94e2f0f0f0e0f282a5e4cf1ae70fa501f96
+11:43:57:751 -> Sending telemetry: 94e7f0f0f0e0f282a5e4cf1ae70fa518f109
+11:43:58:268 -> Sending telemetry: 95e2f0f0f0e0f282a3e56f1ae70fa518f59
+11:43:58:764 -> Sending telemetry: 95e7f0f0f0e0f282a3e56f1ae70fa518f62
+11:43:59:254 -> Sending telemetry: 96e2f0f0f0e0f282a3e56f1ae70fa532f48
+11:43:59:759 -> Sending telemetry: 96e7f0f0f0e0f282a5e23f1be0fa532f5
+11:44:00:222 -> Sending telemetry: 97e1f0f0f0e0f282a5e23f1be0fa532f2
+11:44:00:693 -> Sending telemetry: 97e6f0f0f0e0f282a5e23f1be0fa530f7
+11:44:01:156 -> Sending telemetry: 98e1f0f0f0e0f282a7e68f1be0fa530f2
+11:44:01:640 -> Sending telemetry: 98e5f0f0f0e0f282a7e68f1be0fa530f6
+11:44:02:108 -> Sending telemetry: 99e00f0f0f0e0f282a7e68f1be0fa53cf97
+11:44:02:582 -> Sending telemetry: 99e5f0f0f0e0f282a8e69f1ae70fa53cf110
+11:44:03:099 -> Sending telemetry: 9ae00f0f0f0e0f282a8e69f1ae70fa53cf3
+11:44:03:587 -> Sending telemetry: 9ae5f0f0f0e0f282a8e69f1ae70fa54cf49
+11:44:04:061 -> Sending telemetry: 9be00f0f0f0e0f282a7e4cf1be01fa54cf85
+11:44:04:579 -> Sending telemetry: 9be5f0f0f0e0f282a7e4cf1be01fa54cf96
+11:44:05:069 -> Sending telemetry: 9ce00f0f0f0e0f282a7e4cf1be01fa546f1
+11:44:05:565 -> Sending telemetry: 9ce5f0f0f0e0f282a8e3bf1ae70fa546f56
+11:44:06:060 -> Sending telemetry: 9de00f0f0f0e0f282a8e3bf1ae70fa546f10
+11:44:06:572 -> Sending telemetry: 9de5f0f0f0e0f282a8e7f1be01fa54af11
+11:44:07:061 -> Sending telemetry: a0e00f0f0f0e0f282a8e7f1be01fa54af50
+11:44:07:541 -> Sending telemetry: a0e4f0f0f0e0f282a8e7f1be01fa54af6
+11:44:08:025 -> Sending telemetry: a0e9f0f0f0e0f282a3e35f1be01fa55af48
+11:44:08:526 -> Sending telemetry: a1e4f0f0f0e0f282a3e35f1be01fa55af60
+11:44:09:008 -> Sending telemetry: a1e9f0f0f0e0f282a3e35f1be01fa567f100
+11:44:09:504 -> Sending telemetry: a2e4f0f0f0e0f282a2e46f1be01fa567f111
+11:44:10:013 -> Sending telemetry: a2e9f0f0f0e0f282a2e46f1be01fa567f98
+11:44:10:490 -> Sending telemetry: a3e4f0f0f0e0f282a2e46f1be01fa574f108
+11:44:10:980 -> Sending telemetry: a3e9f0f0f0e0f282a0e3cf1be01fa574f49
+11:44:11:465 -> Sending telemetry: a4e4f0f0f0e0f282a0e3cf1be01fa574f59
+11:44:11:946 -> Sending telemetry: a4e9f0f0f0e0f282a0e3cf1be01fa575f55
+11:44:12:431 -> Sending telemetry: a5e3f0f0f0e0f2829ce6cf1be01fa575f50
+11:44:12:918 -> Sending telemetry: a5e8f0f0f0e0f2829ce6cf1be01fa575f57
+11:44:13:400 -> Sending telemetry: a6e3f0f0f0e0f2829ce6cf1be01fa577f51
+11:44:13:862 -> Sending telemetry: a6e8f0f0f0e0f2829be43f1be02fa577f104
+11:44:14:374 -> Sending telemetry: a7e3f0f0f0e0f2829be43f1be02fa577f98
+11:44:14:857 -> Sending telemetry: a7e8f0f0f0e0f2829be43f1be02fa577f105
+11:44:15:363 -> Sending telemetry: a8e3f0f0f0e0f2829be25f1be02fa577f109
+11:44:15:880 -> Sending telemetry: a8e8f0f0f0e0f2829be25f1be02fa577f102
+11:44:16:373 -> Sending telemetry: a9e3f0f0f0e0f2829be25f1be02fa580f100
+11:44:16:890 -> Sending telemetry: a9e8f0f0f0e0f2829de4bf1be05fa580f63
+11:44:17:387 -> Sending telemetry: aae3f0f0f0e0f2829de4bf1be05fa580f108
+11:44:17:885 -> Sending telemetry: aae8f0f0f0e0f2829be17f1be04fa596f55
+11:44:18:386 -> Sending telemetry: abe3f0f0f0e0f2829be17f1be04fa596f63
+11:44:18:871 -> Sending telemetry: abe8f0f0f0e0f2829be17f1be04fa596f52
+11:44:19:344 -> Sending telemetry: ace3f0f0f0e0f282a0e19f1be05fa598f53
+11:44:19:830 -> Sending telemetry: ace7f0f0f0e0f282a0e19f1be05fa598f49
+11:44:20:313 -> Sending telemetry: ade2f0f0f0e0f282a0e19f1be05fa598f51
+11:44:20:799 -> Sending telemetry: ade7f0f0f0e0f282a3e12f1be05fa5acf61
+11:44:21:300 -> Sending telemetry: b0e2f0f0f0e0f282a3e12f1be05fa5acf111
+11:44:21:806 -> Sending telemetry: b0e7f0f0f0e0f282a3e12f1be05fa5acf106
+11:44:22:301 -> Sending telemetry: b1e2f0f0f0e0f282a2e13f1be05fa5b8f54
+11:44:22:788 -> Sending telemetry: b1e7f0f0f0e0f282a2e13f1be05fa5b8f51
+11:44:23:272 -> Sending telemetry: b2e2f0f0f0e0f282a2e13f1be05fa5daf106
+11:44:23:773 -> Sending telemetry: b2e7f0f0f0e0f282a4e70f1be07fa5daf110
+11:44:24:262 -> Sending telemetry: b3e2f0f0f0e0f282a4e70f1be07fa5daf106
+11:44:24:770 -> Sending telemetry: b3e7f0f0f0e0f282a4e70f1be07fa603f106
+11:44:25:266 -> Sending telemetry: b4e2f0f0f0e0f282a3e34f1be07fa603f111
+11:44:25:762 -> Sending telemetry: b4e7f0f0f0e0f282a3e34f1be07fa603f106
+11:44:26:269 -> Sending telemetry: b5e2f0f0f0e0f282a3e34f1be07fa5dbf104
+11:44:26:776 -> Sending telemetry: b5e7f0f0f0e0f282a1e40f1be09fa5dbf98
+11:44:27:283 -> Sending telemetry: b6e2f0f0f0e0f282a1e40f1be09fa5dbf100
+11:44:27:788 -> Sending telemetry: b6e7f0f0f0e0f282a1e40f1be09fa600f100
+11:44:28:283 -> Sending telemetry: b7e2f0f0f0e0f282a3e48f1be1fa600f82
+11:44:28:759 -> Sending telemetry: b7e7f0f0f0e0f282a3e48f1be1fa600f87
+11:44:29:244 -> Sending telemetry: b8e2f0f0f0e0f282a0e11f1becfa610f1
+11:44:29:708 -> Sending telemetry: b8e6f0f0f0e0f282a0e11f1becfa610f5
+11:44:30:180 -> Sending telemetry: b9e1f0f0f0e0f282a0e11f1becfa610f3
+11:44:30:652 -> Sending telemetry: b9e6f0f0f0e0f282a0e11f1becfa609f12
+11:44:31:114 -> Sending telemetry: bae00f0f0f0e0f282a4e36f1bebfa609f98
+11:44:31:587 -> Sending telemetry: bae5f0f0f0e0f282a4e36f1bebfa609f87
+11:44:32:080 -> Sending telemetry: bbe00f0f0f0e0f282a4e36f1bebfa61af56
+11:44:32:564 -> Sending telemetry: bbe5f0f0f0e0f282a3e7f1becfa61af57
+11:44:33:029 -> Sending telemetry: bbe9f0f0f0e0f282a3e7f1becfa61af53
+11:44:33:487 -> Sending telemetry: bce4f0f0f0e0f282a3e7f1becfa623f104
+11:44:33:972 -> Sending telemetry: bce9f0f0f0e0f282a7e17f1bedfa623f87
+11:44:34:456 -> Sending telemetry: bde4f0f0f0e0f282a7e17f1bedfa623f93
+11:44:34:949 -> Sending telemetry: bde9f0f0f0e0f282a7e17f1bedfa622f81
+11:44:35:435 -> Sending telemetry: c0e3f0f0f0e0f282a9e60f1be10fa622f101
+11:44:35:940 -> Sending telemetry: c0e8f0f0f0e0f282a9e60f1be10fa622f110
+11:44:36:441 -> Sending telemetry: c1e3f0f0f0e0f282abe13f1be14fa635f57
+11:44:36:937 -> Sending telemetry: c1e8f0f0f0e0f282abe13f1be14fa635f50
+11:44:37:421 -> Sending telemetry: c2e3f0f0f0e0f282abe13f1be14fa635f58
+11:44:37:904 -> Sending telemetry: c2e8f0f0f0e0f282abe63f1be15fa629f58
+11:44:38:398 -> Sending telemetry: c3e3f0f0f0e0f282abe63f1be15fa629f48
+11:44:38:883 -> Sending telemetry: c3e8f0f0f0e0f282abe63f1be15fa629f59
+11:44:39:359 -> Sending telemetry: c4e3f0f0f0e0f282aae03f1be15fa634f62
+11:44:39:845 -> Sending telemetry: c4e8f0f0f0e0f282aae03f1be15fa634f53
+11:44:40:327 -> Sending telemetry: c5e2f0f0f0e0f282aae03f1be15fa634f62
+11:44:40:828 -> Sending telemetry: c5e7f0f0f0e0f282abe60f1be15fa639f48
+11:44:41:324 -> Sending telemetry: c6e2f0f0f0e0f282abe60f1be15fa639f54
+11:44:41:808 -> Sending telemetry: c6e7f0f0f0e0f282abe60f1be15fa639f51
+11:44:42:303 -> Sending telemetry: c7e2f0f0f0e0f282aae06f1be2fa647f11
+11:44:42:787 -> Sending telemetry: c7e7f0f0f0e0f282aae06f1be2fa647f14
+11:44:43:259 -> Sending telemetry: c8e2f0f0f0e0f282aae06f1be2fa643f0
+11:44:43:723 -> Sending telemetry: c8e6f0f0f0e0f282a7e25f1be2fa643f83
+11:44:44:186 -> Sending telemetry: c9e1f0f0f0e0f282a7e25f1be2fa643f85
+11:44:44:669 -> Sending telemetry: c9e6f0f0f0e0f282a7e25f1be2fa643f82
+11:44:45:139 -> Sending telemetry: cae00f0f0f0e0f282a7e65f1be2fa662f59
+11:44:45:613 -> Sending telemetry: cae5f0f0f0e0f282a7e65f1be2fa662f14
+11:44:46:095 -> Sending telemetry: cbe00f0f0f0e0f282a7e65f1be2fa662f56
+11:44:46:570 -> Sending telemetry: cbe5f0f0f0e0f282a9e46f1be16fa656f48
+11:44:47:055 -> Sending telemetry: cce00f0f0f0e0f282a9e46f1be16fa656f4
+11:44:47:528 -> Sending telemetry: cce4f0f0f0e0f282a9e46f1be16fa66df97
+11:44:48:008 -> Sending telemetry: cce9f0f0f0e0f282a7e04f1be17fa66df101
+11:44:48:504 -> Sending telemetry: cde4f0f0f0e0f282a7e04f1be17fa66df111
+11:44:49:009 -> Sending telemetry: cde9f0f0f0e0f282a7e04f1be17fa675f50
+11:44:49:489 -> Sending telemetry: d0e4f0f0f0e0f282a1e07f1be17fa675f105
+11:44:49:991 -> Sending telemetry: d0e9f0f0f0e0f282a1e07f1be17fa675f100
+11:44:50:497 -> Sending telemetry: d1e4f0f0f0e0f282a1e07f1be17fa66cf63
+11:44:50:962 -> Sending telemetry: d1e9f0f0f0e0f2829de45f1be18fa66cf54
+11:44:51:446 -> Sending telemetry: d2e4f0f0f0e0f2829de45f1be18fa66cf56
+11:44:51:923 -> Sending telemetry: d2e8f0f0f0e0f2829de45f1be18fa677f97
+11:44:52:411 -> Sending telemetry: d3e3f0f0f0e0f282a1e71f1be19fa677f96
+11:44:52:895 -> Sending telemetry: d3e8f0f0f0e0f282a1e71f1be19fa677f107
+11:44:53:399 -> Sending telemetry: d4e3f0f0f0e0f282a1e71f1be19fa678f104
+11:44:53:909 -> Sending telemetry: d4e8f0f0f0e0f2829de4bf1be18fa678f63
+11:44:54:393 -> Sending telemetry: d5e3f0f0f0e0f2829de4bf1be18fa678f53
+11:44:54:897 -> Sending telemetry: d5e8f0f0f0e0f2829de4bf1be18fa685f60
+11:44:55:387 -> Sending telemetry: d6e3f0f0f0e0f282a0e20f1be18fa685f108
+11:44:55:905 -> Sending telemetry: d6e8f0f0f0e0f282a0e20f1be18fa685f103
+11:44:56:398 -> Sending telemetry: d7e3f0f0f0e0f282a4e38f1be19fa688f108
+11:44:56:907 -> Sending telemetry: d7e8f0f0f0e0f282a4e38f1be19fa688f103
+11:44:57:424 -> Sending telemetry: d8e3f0f0f0e0f282a4e38f1be19fa688f99
+11:44:57:921 -> Sending telemetry: d8e8f0f0f0e0f2829de46f1be1cfa67df96
+11:44:58:411 -> Sending telemetry: d9e3f0f0f0e0f2829de46f1be1cfa67df106
+11:44:58:917 -> Sending telemetry: d9e8f0f0f0e0f2829de46f1be1cfa67df97
+11:44:59:414 -> Sending telemetry: dae3f0f0f0e0f2829de1df1be20fa688f102
+11:44:59:922 -> Sending telemetry: dae8f0f0f0e0f2829de1df1be20fa688f109
+11:45:00:419 -> Sending telemetry: dbe3f0f0f0e0f2829de1df1be20fa688f101
+11:45:00:914 -> Sending telemetry: dbe8f0f0f0e0f2829ce57f1be20fa687f49
+11:45:01:404 -> Sending telemetry: dce3f0f0f0e0f2829ce57f1be20fa687f59
+11:45:01:900 -> Sending telemetry: dce8f0f0f0e0f2829ce57f1be20fa693f53
+11:45:02:374 -> Sending telemetry: dde3f0f0f0e0f282a1e60f1be1dfa693f96
+11:45:02:847 -> Sending telemetry: dde8f0f0f0e0f282a1e60f1be1dfa693f107
+11:45:03:362 -> Sending telemetry: 100e3f0f0f0e0f282a1e60f1be1dfa697f85
+11:45:03:861 -> Sending telemetry: 100e8f0f0f0e0f2829ce1bf1be20fa697f86
+11:45:04:380 -> Sending telemetry: 101e3f0f0f0e0f2829ce1bf1be20fa697f92
+11:45:04:889 -> Sending telemetry: 101e8f0f0f0e0f2829ce1bf1be20fa689f88
+11:45:05:384 -> Sending telemetry: 102e3f0f0f0e0f282a0e09f1be1dfa689f86
+11:45:05:885 -> Sending telemetry: 102e8f0f0f0e0f282a0e09f1be1dfa689f93
+11:45:06:392 -> Sending telemetry: 103e3f0f0f0e0f282a0e09f1be1dfa682f92
+11:45:06:905 -> Sending telemetry: 103e8f0f0f0e0f282a3eaf1be21fa682f106
+11:45:07:422 -> Sending telemetry: 104e3f0f0f0e0f282a3eaf1be21fa682f102
+11:45:07:913 -> Sending telemetry: 104e8f0f0f0e0f282a2e29f1be1dfa694f87
+11:45:08:414 -> Sending telemetry: 105e3f0f0f0e0f282a2e29f1be1dfa694f93
+11:45:08:921 -> Sending telemetry: 105e8f0f0f0e0f282a2e29f1be1dfa694f86
+11:45:09:439 -> Sending telemetry: 106e3f0f0f0e0f282a1e2cf1be20fa695f81
+11:45:09:946 -> Sending telemetry: 106e9f0f0f0e0f282a1e2cf1be20fa695f91
+11:45:10:452 -> Sending telemetry: 107e4f0f0f0e0f282a1e2cf1be20fa698f90
+11:45:10:954 -> Sending telemetry: 107e9f0f0f0e0f2829ce25f1be1dfa698f92
+11:45:11:443 -> Sending telemetry: 108e3f0f0f0e0f2829ce25f1be1dfa698f89
+11:45:11:950 -> Sending telemetry: 108e9f0f0f0e0f2829ce25f1be1dfa6a7f4
+11:45:12:424 -> Sending telemetry: 109e3f0f0f0e0f282a2e0f1be20fa6a7f102
+11:45:12:943 -> Sending telemetry: 109e8f0f0f0e0f282a2e0f1be20fa6a7f109
+11:45:13:450 -> Sending telemetry: 10ae4f0f0f0e0f282a2e0f1be20fa6a8f54
+11:45:13:934 -> Sending telemetry: 10ae8f0f0f0e0f282a4e22f1be21fa6a8f13
+11:45:14:431 -> Sending telemetry: 10be3f0f0f0e0f282a4e22f1be21fa6a8f5
+11:45:14:925 -> Sending telemetry: 10be8f0f0f0e0f282a4e22f1be21fa6a5f3
+11:45:15:413 -> Sending telemetry: 10ce3f0f0f0e0f282a1e3bf1be21fa6a5f93
+11:45:15:905 -> Sending telemetry: 10ce8f0f0f0e0f282a1e3bf1be21fa6a5f86
+11:45:16:406 -> Sending telemetry: 10de3f0f0f0e0f282a1e3bf1be21fa6a3f92
+11:45:16:923 -> Sending telemetry: 10de8f0f0f0e0f2829ce4cf1be21fa6a3f91
+11:45:17:444 -> Sending telemetry: 110e4f0f0f0e0f2829ce4cf1be21fa6a3f2
+11:45:17:923 -> Sending telemetry: 110e8f0f0f0e0f2829ce57f1be20fa6b3f89
+11:45:18:430 -> Sending telemetry: 111e3f0f0f0e0f2829ce57f1be20fa6b3f83
+11:45:18:942 -> Sending telemetry: 111e8f0f0f0e0f2829ce57f1be20fa6b3f88
+11:45:19:446 -> Sending telemetry: 112e3f0f0f0e0f2829cedf1be20fa6abf100
+11:45:19:967 -> Sending telemetry: 112e9f0f0f0e0f2829cedf1be20fa6abf110
+11:45:20:462 -> Sending telemetry: 113e4f0f0f0e0f2829cedf1be20fa6b7f52
+11:45:20:935 -> Sending telemetry: 113e8f0f0f0e0f2829de07f1be21fa6b7f93
+11:45:21:453 -> Sending telemetry: 114e4f0f0f0e0f2829de07f1be21fa6b7f86
+11:45:21:957 -> Sending telemetry: 114e9f0f0f0e0f2829de07f1be21fa6c4f89
+11:45:22:441 -> Sending telemetry: 115e3f0f0f0e0f28299e7f1be2fa6c4f14
+11:45:22:947 -> Sending telemetry: 115e9f0f0f0e0f28299e7f1be2fa6c4f4
+11:45:23:405 -> Sending telemetry: 116e3f0f0f0e0f28299e7f1be2fa6c1f8

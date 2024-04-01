@@ -1,0 +1,76 @@
+KACAT Mission Control
+Waiting for RADIO handshakeInitializing SD card...SD: OK
+	File Name: flightLog201.txt
+	File Created: flightLog201.txt
+*Parsec* KACAT config v31.03.2024 21:15 ~BÁ #1.Change header on each change; 2.Only change the lines under a 'v'; 3. DO NOT CHANGE THE FILE NAME!!!
+868000000
+10
+10
+
+AUTOMATIC_RADIO_SETUP
+radio rxstop
+ok
+
+radio set freq 868000000
+ok
+
+radio set bw 125
+ok
+
+radio set sf sf7
+ok
+
+radio set sync 34
+ok
+
+Telemetry: OK
+Frequency: radio get freq
+868000000
+
+Bandwidth: radio get bw
+125
+
+Sync word: radio get sync
+34
+
+Spreading factor: radio get sf
+sf7
+
+Chirp rate: radio get cr
+4/5
+
+Radio info:
+Servo:
+	Clockwise speed: 66
+	Counterclockwise speed: 120
+Servo: OK
+Servo test
+Guidance info:
+	Target latitude: 47.52
+	Target longitude: 19.11
+ngitude: 
+
+Guidance: OK
+Starting flight
+Sending telemetry: de9f0e0f0e0f0e0f0e0f0e0f0f11
+Sending telemetry: 10e3f0e0f0e0f0e0f282b5e44f18e29f0f9
+Sending telemetry: 10e7f0e0f0e0f0e0f282b5e44f18e29f0f13
+Sending telemetry: 11e2f0e0f0e0f0e0f282b5e44f18e29f0f9
+Sending telemetry: 11e7f0e0f0e0f0e0f282b9e68f18e45f0f4
+Sending telemetry: 12e2f0e0f0e0f0e0f282b9e68f18e45f0f2
+Sending telemetry: 12e7f0e0f0e0f0e0f282b9e68f18e45f82a7f107
+Sending telemetry: 13e2f0e0f0e0f0e0f282b6e41f18e48f82a7f102
+Sending telemetry: 13e8f0e0f0e0f0e0f282b6e41f18e48f82a7f108
+Sending telemetry: 14e4f0e0f0e0f0e0f282b6e41f18e48f8826f63
+Sending telemetry: 14e9f0e0f0e0f0e0f282b8e51f18e4bf8826f103
+Sending telemetry: 15e5f0e0f0e0f0e0f282b8e51f18e4bf8826f106
+Sending telemetry: 16e00f0e0f0e0f0e0f282b6e46f18e4bf8ac7f93
+Sending telemetry: 16e6f0e0f0e0f0e0f282b6e46f18e4bf8ac7f107
+Sending telemetry: 17e2f0e0f0e0f0e0f282b6e46f18e4bf8cbaf59
+Sending telemetry: 17e7f0e0f0e0f0e0f282b7e39f18e4cf8cbaf54
+Sending telemetry: 18e3f0e0f0e0f0e0f282b7e39f18e4cf8cbaf61
+Sending telemetry: 18e8f0e0f0e0f0e0f282b6e60f18e50f9001f57
+Sending telemetry: 19e4f0e0f0e0f0e0f282b6e60f18e50f9001f52
+~~~~~ Starting descent guidance... ~~~~~
+Sending telemetry: 19e9f0e0f0e0f0e0f282b6e60f18e50f9130f58
+Sending telemetry: 1ae4f0e0f0e0f0e0f282b5e5f18e7f9130f109

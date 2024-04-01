@@ -1,0 +1,60 @@
+KACAT Mission Control
+Waiting for RADIO handshakeInitializing SD card...SD: OK
+	File Name: flightLog203.txt
+	File Created: flightLog203.txt
+*Parsec* KACAT config v31.03.2024 21:15 ~BÁ #1.Change header on each change; 2.Only change the lines under a 'v'; 3. DO NOT CHANGE THE FILE NAME!!!
+868000000
+10
+10
+
+AUTOMATIC_RADIO_SETUP
+radio rxstop
+ok
+
+radio set freq 868000000
+ok
+
+radio set bw 125
+ok
+
+radio set sf sf7
+ok
+
+radio set sync 34
+ok
+
+Telemetry: OK
+Frequency: radio get freq
+868000000
+
+Bandwidth: radio get bw
+125
+
+Sync word: radio get sync
+34
+
+Spreading factor: radio get sf
+sf7
+
+Chirp rate: radio get cr
+4/5
+
+Radio info:
+Servo:
+	Clockwise speed: 66
+	Counterclockwise speed: 120
+Servo: OK
+Servo test
+Guidance info:
+	Target latitude: 47.52
+	Target longitude: 19.11
+ngitude: 
+
+Guidance: OK
+Starting flight
+Sending telemetry: de9f2c4261076f2c7c6d196f0e0f0e0f0e0f0f3
+Sending telemetry: 10e4f1652ca932f1652ca932f0e0f282ade35f18e47f0f82
+Sending telemetry: 11e00f1652ca932f1652ca932f0e0f282ade35f18e47f0f103
+Sending telemetry: 11e7f1652ca932f1652ca932f0e0f282ade65f18e63f0f83
+Sending telemetry: 12e4f1652ca932f1652ca932f0e0f282b0e44f18e64f0f0
+Sending telemetry: 13e1f1652ca932f1652ca932f0e0f282b0e44f18e64f0f4

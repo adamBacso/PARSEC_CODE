@@ -1,0 +1,23 @@
+invalid_param
+WLR089 Xpro MLS_SDK_1_0_P_5 Nov 17 2022 14:39:46
+invalid_param
+ok
+radio_tx_ok
+Total packet: 1,Sent: 1,Channel busy: 0
+34
+868100000
+ok
+ok
+radio_tx_ok
+Total packet: 1,Sent: 1,Channel busy: 0
+sf7
+ok
+invalid_param
+868000000
+34
+ok
+radio_tx_ok
+Total packet: 1,Sent: 1,Channel busy: 0
+ok
+radio_tx_ok
+Total packet: 1,Sent: 1,Channel busy: 0
