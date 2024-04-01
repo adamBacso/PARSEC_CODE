@@ -120,10 +120,10 @@ void kacat_init(void){
     callibrate_sensors();
     guidance_begin();
     if (!Serial){
-        inFlight = false;
+        inFlight = true;
     Serial.println("~~~ Starting operation ~~~");
     } else {
-        inFlight = false;
+        inFlight = true;
     }
 }
 
@@ -682,6 +682,7 @@ void telemetry_send(void){
     radioTelemetry = "";
 
     // HEADER
+    Serial.println("->"+String(get_time(),1)+","+String(latitude)+","+String(longitude)+","+String(gpsAltitude)+","+String(pressure)+","+String(temperature)+","+String(sgpVocIndex));
 
     if (latitude > 47){
     latitude -= 47;
@@ -698,6 +699,7 @@ void telemetry_send(void){
     prints(pressure,4);                                    //     pressure in hPa
     prints(temperature,2);
     prints(sgpVocIndex);
+
 
     String checksum = get_checksum(radioTelemetry);                            // checksum
     radioTelemetry += checksum;
@@ -782,6 +784,7 @@ void delegate_incoming_telemetry(void){
             int dataID = 0;
             incoming = incoming.substring(telemetryPreamble.length());
             int commaIndex = incoming.indexOf("f");
+            String incomingDecimal = "";
             while (commaIndex != -1){
                 String dataFragment = incoming.substring(0,commaIndex);
                 int decimalIndex = dataFragment.indexOf("e");
@@ -853,12 +856,16 @@ void delegate_incoming_telemetry(void){
                 incoming = incoming.substring(commaIndex+1);
                 dataID += 1;
                 commaIndex = incoming.indexOf("f");
+                incomingDecimal += number;
+                incomingDecimal += ',';
             }
             flightLog = SD.open(logName.c_str(), FILE_WRITE);
             if (flightLog){
                 flightLog.println();
             }
             flightLog.close();
+            Serial.print("->");
+            Serial.println(incomingDecimal);
         }
     } 
 }
