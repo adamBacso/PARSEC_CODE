@@ -1070,7 +1070,7 @@ void descent_guidance(void){
     while (guidanceNeeded){
         //collect_system_data();
         if (gps.location.isValid()){ // are we getting good data?
-            if (distanceToTarget>thresholdDistanceToTarget){ // are we there yet?
+            //if (distanceToTarget>thresholdDistanceToTarget){ // are we there yet?
                 int32_t courseDeviation = courseToTarget-currentCourse;
                 Serial.println(courseDeviation);
                 if (abs(courseDeviation) > courseDeviationThreshold){ // are we headed in the right direction?
@@ -1090,12 +1090,12 @@ void descent_guidance(void){
                 } else {
                     servo_reset();
                 }
-            } else {
-                set_servo_position(maxAngle);
-                guidanceNeeded = false;
-            }
+            //} else {
+            //    set_servo_position(maxAngle);
+            //    guidanceNeeded = false;
+            //}
         } else {
-            servo_reset();
+            set_servo_position(maxAngle);
         }
         threads.yield();
     }
