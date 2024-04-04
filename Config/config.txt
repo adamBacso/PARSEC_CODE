@@ -1,6 +1,6 @@
 *Parsec* KACAT config v01.04.2024 21:15 ~BÁ #1.Change header on each change; 2.Only change the lines under a 'v'; 3. DO NOT CHANGE THE FILE NAME!!!
 v -frequency
-868000000
+865125000
 v -syncWord
 34
 v -radioBandwidth
