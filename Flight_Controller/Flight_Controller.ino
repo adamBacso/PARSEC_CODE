@@ -616,6 +616,7 @@ void collect_system_data(void){
     threads.yield();
 }
 
+bool gpsUpdated = false;
 void collect_gps_data(void){
     if (gps.location.isValid()){
         longitude = gps.location.lng();
@@ -623,6 +624,9 @@ void collect_gps_data(void){
         courseToTarget = course_to_target();
         currentCourse = gps.course.deg();
         distanceToTarget = distance_to_target();
+        gpsUpdated = true;
+    } else {
+        gpsUpdated = false;
     }
     if (gps.altitude.isValid()){
         gpsAltitude = gps.altitude.meters();
@@ -686,13 +690,15 @@ void telemetry_send(void){
     // HEADER
     Serial.println("->"+String(get_time(),1)+","+String(latitude)+","+String(longitude)+","+String(gpsAltitude)+","+String(pressure)+","+String(temperature)+","+String(sgpVocIndex));
 
-    if (latitude > 47){
-    latitude -= 47;
-    latitude *= 1000000;   
-    }
-    if (longitude > 19){
-    longitude -= 19;
-    longitude *= 1000000;
+    if (gpsUpdated){
+        if (latitude > 47){
+        latitude -= 47;
+        latitude *= 1000000;   
+        }
+        if (longitude > 19){
+        longitude -= 19;
+        longitude *= 1000000;
+        }
     }
     prints(get_time(),1);                                             // current mission time
     prints(latitude);                                 // latitude
