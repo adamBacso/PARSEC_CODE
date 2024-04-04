@@ -91,6 +91,11 @@ const int ledDelay = 25; // in ms
 // ~SETUP
 bool go = false;
 
+void fatal_error(const char *message = "generic error")
+{
+    Serial.println("ERROR: " + *message);
+    while (1);
+}
 
 void servo_test(int iterations = 1){
     Serial.println("Servo test");
@@ -117,7 +122,7 @@ void kacat_init(void){
     get_radio_info();
     servo_begin();
     servo_zero();
-    servo_test(2);
+    servo_test();
     //gps_begin();
     callibrate_sensors();
     guidance_begin();
@@ -173,11 +178,7 @@ void config(void) {
     }
 }
 
-void fatal_error(const char* message){
-    Serial.println("ERROR: " + *message);
-    while (1);
-}
-    
+
 ///////////////////////////////////////////////////////////////////////////////
 // ~SERIAL
 
