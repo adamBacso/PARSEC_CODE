@@ -631,8 +631,6 @@ void collect_gps_data(void){
         courseToTarget = course_to_target();
         currentCourse = gps.course.deg();
         distanceToTarget = distance_to_target();
-    }
-    if (gps.altitude.isValid()){
         gpsAltitude = gps.altitude.meters();
     }
     threads.yield();
@@ -1115,6 +1113,7 @@ void descent_guidance(void){
             //}
         } else {
             set_servo_position(maxAngle);
+            sd_write("~~~ GPS ERROR ~~~");
             while (!gps.location.isValid()){
                 threads.yield();
             }
