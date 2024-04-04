@@ -36,6 +36,7 @@ volatile double targetLongitude = 19.1026;
 float altitudeCalibration = 0;
 volatile int steerTime = 200; // in ms
 volatile int glideTime = 2000; // in ms
+volatile int accelerationThreshold = 18; // m/s^2
 bool inFlight = true;
 
 // SERVO
@@ -45,8 +46,8 @@ float servoSpeed = 0.54;
 int servoSpeedRatio = 1;
 int servoNeutral = 93;
 float servoFrequency = 240;
-int clockwise = 66;
-int counterclockwise = 120;
+volatile int clockwise = 66;
+volatile int counterclockwise = 120;
 
 // RADIO
 int commsBaudRate = 115200;
@@ -170,6 +171,12 @@ void config(void) {
         steerTime = (int)config.readStringUntil('\n').toInt(); // 29
         config.readStringUntil('\n'); // 30
         glideTime = (int)config.readStringUntil('\n').toInt(); // 31
+        config.readStringUntil('\n'); // 32
+        clockwise = (int)config.readStringUntil('\n').toInt(); // 33
+        config.readStringUntil('\n'); // 34
+        counterclockwise = (int)config.readStringUntil('\n').toInt(); // 35
+        config.readStringUntil('\n'); // 36
+        accelerationThreshold = (int)config.readStringUntil('\n').toInt(); // 37
         config.close();
     }
     else{
@@ -1063,7 +1070,7 @@ void confirmGuidance(void){
 void descent_guidance(void){
     currentLoggingDelay = dataLoggingBaseDelay;
     float currentAcceleration = abs(accelerationX) + abs(accelerationY) + abs(accelerationZ);
-    while (currentAcceleration<15){
+    while (currentAcceleration<accelerationThreshold){
         currentAcceleration = abs(accelerationX) + abs(accelerationY) + abs(accelerationZ);
         threads.yield();
     }

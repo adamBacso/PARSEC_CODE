@@ -18,14 +18,20 @@ v -targetLongitude
 v -transmission percent (in percent form without %)
 10
 v -data collection delay (ms)
-100
+75
 v -data logging base delay (ms)
 2000
 v -data logging fast delay (ms)
 100
 v -max servo angle (<=45!!!)
-45
+5
 v -steer time (returns to straight flight after this time) (ms)
 200
 v -glide time (the amount of time it waits to check course again) (ms)
 2000
+v -clockwise pwm (neutral = 93)
+66
+v -counterclockwise pwm
+120
+v -net acceleration threshold 
+18
