@@ -1114,6 +1114,9 @@ void descent_guidance(void){
             //}
         } else {
             set_servo_position(maxAngle);
+            while (!gps.location.isValid()){
+                threads.yield();
+            }
         }
         threads.yield();
     }
