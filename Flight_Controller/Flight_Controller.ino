@@ -30,7 +30,7 @@ int thresholdDistanceToTarget = 10; // m
 volatile float courseDeviationThreshold = 0.5; // in degrees
 float drumRadius = 1.1; // in cm
 float maxPullLength = 4; // in cm
-int maxAngle = 45;
+volatile int maxAngle = 45;
 volatile double targetLatitude = 47.2540; // Budapest coordinates
 volatile double targetLongitude = 19.1026;
 float altitudeCalibration = 0;
@@ -1107,6 +1107,7 @@ void descent_guidance(void){
                     threads.delay(glideTime);
                 } else {
                     servo_reset();
+                    threads.delay(glideTime);
                 }
             //} else {
             //    set_servo_position(maxAngle);
