@@ -101,9 +101,8 @@ def save_to_csv():
         fileName = fileNameBase + str(fileID) + fileExtension
     
     with open(fileName, 'w', newline='') as file:
-        writer = csv.writer(file)
         for i in range(len(time_data)-1):
-            writer.writerow([time_data[i],latitude_data[i],longitude_data[i],altitude_data[i],pressure_data[i],tempererature_data[i],vocIndex_data[i]])
+            file.write(f"{time_data[i]},{latitude_data[i]},{longitude_data[i]},{altitude_data[i]},{pressure_data[i]},{tempererature_data[i]},{vocIndex_data[i]}\n")
 
 while receiving:
     read_and_process_data()
