@@ -25,3 +25,7 @@ v -data logging fast delay (ms)
 100
 v -max servo angle (<=45!!!)
 45
+v -steer time (returns to straight flight after this time) (ms)
+200
+v -glide time (the amount of time it waits to check course again) (ms)
+2000

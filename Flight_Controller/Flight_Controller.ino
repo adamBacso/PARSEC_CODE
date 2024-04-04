@@ -34,6 +34,8 @@ int maxAngle = 45;
 double targetLatitude = 47.2540; // Budapest coordinates
 double targetLongitude = 19.1026;
 float altitudeCalibration = 0;
+volatile int steerTime = 200; // in ms
+volatile int glideTime = 2000; // in ms
 bool inFlight = true;
 
 // SERVO
@@ -159,6 +161,10 @@ void config(void) {
         dataLoggingFastDelay = (int)config.readStringUntil('\n').toInt(); // 25
         config.readStringUntil('\n'); // 26
         maxAngle = (int)config.readStringUntil('\n').toInt(); // 27
+        config.readStringUntil('\n'); // 28
+        steerTime = (int)config.readStringUntil('\n').toInt(); // 29
+        config.readStringUntil('\n'); // 30
+        glideTime = (int)config.readStringUntil('\n').toInt(); // 31
         config.close();
     }
     else{
@@ -1095,6 +1101,9 @@ void descent_guidance(void){
                             set_servo_position(maxAngle*-1);
                         }
                     }
+                    threads.delay(steerTime);
+                    servo_reset();
+                    threads.delay(glideTime);
                 } else {
                     servo_reset();
                 }
