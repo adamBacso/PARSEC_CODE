@@ -157,6 +157,8 @@ void config(void) {
         dataLoggingBaseDelay = (int)config.readStringUntil('\n').toInt(); // 23
         config.readStringUntil('\n'); // 24
         dataLoggingFastDelay = (int)config.readStringUntil('\n').toInt(); // 25
+        config.readStringUntil('\n'); // 26
+        maxAngle = (int)config.readStringUntil('\n').toInt(); // 27
         config.close();
     }
     else{

@@ -23,3 +23,5 @@ v -data logging base delay (ms)
 2000
 v -data logging fast delay (ms)
 100
+v -max servo angle (<=45!!!)
+45
