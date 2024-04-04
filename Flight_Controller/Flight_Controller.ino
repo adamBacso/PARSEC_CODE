@@ -24,15 +24,15 @@
 
 // GUIDANCE THRESHOLDS
 volatile bool gpsActive = false;
-int guidanceAltitudeThreshold = 0; // m
+volatile int guidanceAltitudeThreshold = 0; // m
 int guidanceVSpeedThreshold = -2; // m/s
 int thresholdDistanceToTarget = 10; // m
-float courseDeviationThreshold = 0.5; // in degrees
+volatile float courseDeviationThreshold = 0.5; // in degrees
 float drumRadius = 1.1; // in cm
 float maxPullLength = 4; // in cm
 int maxAngle = 45;
-double targetLatitude = 47.2540; // Budapest coordinates
-double targetLongitude = 19.1026;
+volatile double targetLatitude = 47.2540; // Budapest coordinates
+volatile double targetLongitude = 19.1026;
 float altitudeCalibration = 0;
 volatile int steerTime = 200; // in ms
 volatile int glideTime = 2000; // in ms
