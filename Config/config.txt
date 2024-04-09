@@ -8,7 +8,7 @@ v -radioBandwidth
 v -spreadingFactor
 7
 v -courseDeviationThreshold
-0.5
+3
 v -guidanceAltitudeThreshold
 -10
 v -targetLatitude

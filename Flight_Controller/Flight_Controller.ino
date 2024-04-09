@@ -131,7 +131,7 @@ void kacat_init(void){
         inFlight = true;
     Serial.println("~~~ Starting operation ~~~");
     } else {
-        inFlight = true;
+        inFlight = false;
     }
 }
 
@@ -639,6 +639,8 @@ void collect_gps_data(void){
         currentCourse = gps.course.deg();
         distanceToTarget = distance_to_target();
         gpsAltitude = gps.altitude.meters();
+    } else {
+        sd_write("GPS not valid");
     }
     threads.yield();
 }
