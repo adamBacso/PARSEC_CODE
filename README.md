@@ -1,12 +1,8 @@
 # PARSEC_CODE
-Place for teensy related code along with flowcharts
-(flowcharts can be viewed using draw.io)
 
-## Flight controller
-The piece of program running on the Teensy 4.0 inside KACAT
+Hello there! We are Parsec and this is the repository of our CanSat (nicknamed Kacat). Created for the CanSat Hungary 2024 competition, we were able to secure the Technical Award. Feel free to browse our code, design, and all other content we collected here. 
 
-## Ground Control Station
-The piece of program running on the Teensy 4.0 on the ground
+> **FOR CANSAT TEAMS**: Feel free to browse, to be inspired by the code or any of the designs you may like, but we would like to encourage you to search for your own solutions. We had 0 experience with this before the competition and learned everything through trial and error. That is the beauty of it. **Happy coding and soldering!** *--Parsec*
 
-# Documention
-Documentation is available in the `.swm` folder as raw Markdown, but for your viewing pleasures, the Swimm extension is recommended in VS Code or the [Swimm](https://app.swimm.io/) website.
+# ~~ DISCLAIMER ~~
+This repo is under restructuring, meaning that the existing content will not change significantly aside from some tidying, but we plan on making it feature complete by Q3 2024 (no promises😅). Sorry for the inconvenience.
